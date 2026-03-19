@@ -231,47 +231,60 @@ class MainActivity : AppCompatActivity() {
         dataSet.colors = colors
         dataSet.valueTextColor = Color.WHITE
         dataSet.valueTextSize = 13f
-        dataSet.sliceSpace = 3f
+        dataSet.sliceSpace = 4f
         dataSet.selectionShift = 8f
+        dataSet.yValuePosition = PieDataSet.ValuePosition.OUTSIDE_SLICE
+        dataSet.xValuePosition = PieDataSet.ValuePosition.OUTSIDE_SLICE
+        dataSet.valueLinePart1OffsetPercentage = 80f
+        dataSet.valueLinePart1Length = 0.4f
+        dataSet.valueLinePart2Length = 0.5f
+        dataSet.valueLineColor = Color.WHITE
 
         binding.chartGrafica.data = PieData(dataSet)
         binding.chartGrafica.setUsePercentValues(true)
         binding.chartGrafica.setDrawHoleEnabled(false)
         binding.chartGrafica.setEntryLabelColor(Color.WHITE)
-        binding.chartGrafica.setEntryLabelTextSize(12f)
+        binding.chartGrafica.setEntryLabelTextSize(11f)
         binding.chartGrafica.description.isEnabled = false
         binding.chartGrafica.legend.textColor = Color.WHITE
         binding.chartGrafica.legend.textSize = 12f
-        binding.chartGrafica.setExtraOffsets(16f, 16f, 16f, 16f)
+        binding.chartGrafica.setExtraOffsets(24f, 24f, 24f, 24f)
         binding.chartGrafica.invalidate()
     }
 
     private fun capturarGraficaBitmap(): Bitmap {
-        val bitmap = Bitmap.createBitmap(515, 260, Bitmap.Config.ARGB_8888)
+        binding.chartGrafica.setEntryLabelColor(Color.parseColor("#333333"))
+        binding.chartGrafica.legend.textColor = Color.parseColor("#333333")
+        (binding.chartGrafica.data?.dataSet as? PieDataSet)?.valueTextColor = Color.parseColor("#333333")
+        (binding.chartGrafica.data?.dataSet as? PieDataSet)?.valueLineColor = Color.parseColor("#333333")
+        binding.chartGrafica.measure(
+            View.MeasureSpec.makeMeasureSpec(515, View.MeasureSpec.EXACTLY),
+            View.MeasureSpec.makeMeasureSpec(280, View.MeasureSpec.EXACTLY)
+        )
+        binding.chartGrafica.layout(0, 0, 515, 280)
+        val bitmap = Bitmap.createBitmap(515, 280, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
         canvas.drawColor(Color.WHITE)
         binding.chartGrafica.draw(canvas)
+        binding.chartGrafica.setEntryLabelColor(Color.WHITE)
+        binding.chartGrafica.legend.textColor = Color.WHITE
+        (binding.chartGrafica.data?.dataSet as? PieDataSet)?.valueTextColor = Color.WHITE
+        (binding.chartGrafica.data?.dataSet as? PieDataSet)?.valueLineColor = Color.WHITE
+        binding.chartGrafica.invalidate()
         return bitmap
     }
 
     private fun dibujarHeaderPDF(canvas: android.graphics.Canvas, paint: Paint, titulo: String, fecha: String, nombreUsuario: String) {
-        // Fondo header verde esmeralda
         paint.color = Color.parseColor("#004D39")
         paint.style = Paint.Style.FILL
         canvas.drawRect(0f, 0f, 595f, 110f, paint)
-
-        // Barra dorada inferior del header
         paint.color = Color.parseColor("#D4AF37")
         canvas.drawRect(0f, 105f, 595f, 112f, paint)
-
-        // Título en dorado
         paint.color = Color.parseColor("#D4AF37")
         paint.textSize = 20f
         paint.isFakeBoldText = true
         paint.style = Paint.Style.FILL
         canvas.drawText(titulo, 40f, 45f, paint)
-
-        // Subtítulo blanco
         paint.color = Color.WHITE
         paint.textSize = 11f
         paint.isFakeBoldText = false
@@ -315,8 +328,6 @@ class MainActivity : AppCompatActivity() {
 
             var y = 140f
             paint.style = Paint.Style.FILL
-
-            // Sección datos
             paint.color = Color.parseColor("#004D39")
             paint.textSize = 13f
             paint.isFakeBoldText = true
@@ -340,8 +351,6 @@ class MainActivity : AppCompatActivity() {
             canvas.drawText("Cuota IMSS Obrera (2.375%):", 50f, y, paint)
             paint.isFakeBoldText = true
             canvas.drawText("${String.format("%,.2f", imss)} MXN", 380f, y, paint); y += 30f
-
-            // Sección ISR
             paint.color = Color.parseColor("#004D39")
             paint.textSize = 13f
             paint.isFakeBoldText = true
@@ -365,8 +374,6 @@ class MainActivity : AppCompatActivity() {
                 paint.color = Color.DKGRAY; y += 20f
             }
             y += 10f
-
-            // Neto destacado
             paint.color = Color.parseColor("#004D39")
             paint.style = Paint.Style.FILL
             val rect = RectF(35f, y, 560f, y + 50f)
@@ -381,8 +388,6 @@ class MainActivity : AppCompatActivity() {
             paint.isFakeBoldText = false
             canvas.drawText("Ingreso disponible después de impuestos y deducciones", 50f, y + 40f, paint)
             y += 70f
-
-            // Gráfica
             if (ultimoNeto > 0 && binding.chartGrafica.visibility == View.VISIBLE) {
                 paint.color = Color.parseColor("#004D39")
                 paint.textSize = 13f
@@ -394,16 +399,12 @@ class MainActivity : AppCompatActivity() {
                 paint.style = Paint.Style.FILL
                 val graficaBitmap = capturarGraficaBitmap()
                 canvas.drawBitmap(graficaBitmap, 40f, y, null)
-                y += 270f
             }
-
             dibujarFooterPDF(canvas, paint)
             doc.finishPage(page)
-
             val file = File(getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), getNombreArchivo("Compartir"))
             doc.writeTo(FileOutputStream(file))
             doc.close()
-
             val uri = FileProvider.getUriForFile(this, "${packageName}.provider", file)
             val intent = Intent(Intent.ACTION_SEND).apply {
                 type = "application/pdf"
@@ -424,9 +425,7 @@ class MainActivity : AppCompatActivity() {
             val page = doc.startPage(PdfDocument.PageInfo.Builder(595, 842, 1).create())
             val canvas = page.canvas
             val paint = Paint(Paint.ANTI_ALIAS_FLAG)
-
             dibujarHeaderPDF(canvas, paint, "REPORTE PREMIUM ISR 2026", fecha, nombreUsuario)
-
             var y = 140f
             paint.style = Paint.Style.FILL
             paint.color = Color.parseColor("#004D39")
@@ -473,10 +472,8 @@ class MainActivity : AppCompatActivity() {
             paint.textSize = 10f
             paint.isFakeBoldText = false
             canvas.drawText("Ingreso disponible después de impuestos", 50f, y + 40f, paint)
-
             dibujarFooterPDF(canvas, paint)
             doc.finishPage(page)
-
             val file = File(getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), getNombreArchivo("Premium"))
             doc.writeTo(FileOutputStream(file))
             val uri = FileProvider.getUriForFile(this, "${packageName}.provider", file)
@@ -500,9 +497,7 @@ class MainActivity : AppCompatActivity() {
             val page = doc.startPage(PdfDocument.PageInfo.Builder(595, 842, 1).create())
             val canvas = page.canvas
             val paint = Paint(Paint.ANTI_ALIAS_FLAG)
-
             dibujarHeaderPDF(canvas, paint, "REPORTE PROFESIONAL ISR 2026", fecha, nombreUsuario)
-
             var y = 140f
             paint.style = Paint.Style.FILL
             paint.color = Color.parseColor("#004D39")
@@ -527,7 +522,6 @@ class MainActivity : AppCompatActivity() {
             canvas.drawText("Cuota IMSS Obrera (2.375%):", 50f, y, paint)
             paint.isFakeBoldText = true
             canvas.drawText("${String.format("%,.2f", imss)} MXN", 380f, y, paint); y += 30f
-
             paint.color = Color.parseColor("#004D39")
             paint.textSize = 13f
             paint.isFakeBoldText = true
@@ -551,7 +545,6 @@ class MainActivity : AppCompatActivity() {
                 paint.color = Color.DKGRAY; y += 20f
             }
             y += 10f
-
             paint.color = Color.parseColor("#004D39")
             paint.style = Paint.Style.FILL
             val rect = RectF(35f, y, 560f, y + 50f)
@@ -566,8 +559,6 @@ class MainActivity : AppCompatActivity() {
             paint.isFakeBoldText = false
             canvas.drawText("Ingreso disponible después de impuestos y deducciones", 50f, y + 40f, paint)
             y += 70f
-
-            // Gráfica exportada
             paint.color = Color.parseColor("#004D39")
             paint.textSize = 13f
             paint.isFakeBoldText = true
@@ -578,10 +569,8 @@ class MainActivity : AppCompatActivity() {
             paint.style = Paint.Style.FILL
             val graficaBitmap = capturarGraficaBitmap()
             canvas.drawBitmap(graficaBitmap, 40f, y, null)
-
             dibujarFooterPDF(canvas, paint)
             doc.finishPage(page)
-
             val file = File(getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), getNombreArchivo("SuperPremium"))
             doc.writeTo(FileOutputStream(file))
             val uri = FileProvider.getUriForFile(this, "${packageName}.provider", file)
