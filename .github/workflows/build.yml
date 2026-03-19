@@ -38,17 +38,14 @@ jobs:
       - name: Build Debug APK
         run: ./gradlew assembleDebug --stacktrace
 
-      - name: Build Release AAB
-        run: ./gradlew bundleRelease --stacktrace
-
-      - name: Sign AAB
-        uses: r0adkll/sign-android-release@v1
-        with:
-          releaseDirectory: app/build/outputs/bundle/release
-          signingKeyBase64: ${{ secrets.KEYSTORE_BASE64 }}
-          alias: isrcalculadora
-          keyStorePassword: ${{ secrets.KEYSTORE_PASSWORD }}
-          keyPassword: ${{ secrets.KEY_PASSWORD }}
+      - name: Build and Sign Release AAB
+        run: |
+          ./gradlew bundleRelease \
+            -Pandroid.injected.signing.store.file=isrcalculadora.jks \
+            -Pandroid.injected.signing.store.password=${{ secrets.KEYSTORE_PASSWORD }} \
+            -Pandroid.injected.signing.key.alias=isrcalculadora \
+            -Pandroid.injected.signing.key.password=${{ secrets.KEY_PASSWORD }}
+        working-directory: app
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
@@ -60,4 +57,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ISR-Release-AAB
-          path: app/build/outputs/bundle/release/*.aab
+          path: app/build/outputs/bundle/release/app-release.aab
