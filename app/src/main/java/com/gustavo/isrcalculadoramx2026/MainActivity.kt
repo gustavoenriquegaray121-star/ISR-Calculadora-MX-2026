@@ -1,8 +1,11 @@
 package com.gustavo.isrcalculadoramx2026
 
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.RectF
 import android.graphics.pdf.PdfDocument
 import android.os.Bundle
 import android.os.Environment
@@ -67,7 +70,6 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         setTheme(R.style.Theme_ISRCalculadoraMX2026)
-
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -84,9 +86,7 @@ class MainActivity : AppCompatActivity() {
         binding.btnUpgradePremium.setOnClickListener {
             isPremium = true
             binding.adView.visibility = View.GONE
-            Toast.makeText(this,
-                "💎 Premium desbloqueado — $119 pago único",
-                Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "💎 Premium desbloqueado — \$119 pago único", Toast.LENGTH_LONG).show()
             if (ultimoNeto > 0) {
                 binding.chartGrafica.visibility = View.VISIBLE
                 dibujarGrafica(ultimoISR, ultimoIMSS, ultimoNeto)
@@ -108,20 +108,14 @@ class MainActivity : AppCompatActivity() {
             val btnSave = dialog.findViewById<Button>(R.id.btn_save_pdf)
 
             btnShare.setOnClickListener {
-                if (ultimoNeto > 0) {
-                    generarYCompartirPDF(ultimoISR, ultimoIMSS, ultimoNeto)
-                } else {
-                    Toast.makeText(this, "😅 Primero calcula un sueldo", Toast.LENGTH_SHORT).show()
-                }
+                if (ultimoNeto > 0) generarYCompartirPDF(ultimoISR, ultimoIMSS, ultimoNeto)
+                else Toast.makeText(this, "😅 Primero calcula un sueldo", Toast.LENGTH_SHORT).show()
                 dialog.dismiss()
             }
 
             btnSave.setOnClickListener {
-                if (ultimoNeto > 0) {
-                    generarPDFProfesional(ultimoISR, ultimoIMSS, ultimoNeto)
-                } else {
-                    Toast.makeText(this, "😅 Primero calcula un sueldo", Toast.LENGTH_SHORT).show()
-                }
+                if (ultimoNeto > 0) generarPDFProfesional(ultimoISR, ultimoIMSS, ultimoNeto)
+                else Toast.makeText(this, "😅 Primero calcula un sueldo", Toast.LENGTH_SHORT).show()
                 dialog.dismiss()
             }
 
@@ -152,19 +146,19 @@ class MainActivity : AppCompatActivity() {
         }
 
         val detalleAntes = calcularISRDetalle(gravable)
-        val detalleDepues = aplicarSubsidio(detalleAntes, gravable)
-        ultimoSubsidioAplicado = detalleDepues.isr < detalleAntes.isr
+        val detalleDespues = aplicarSubsidio(detalleAntes, gravable)
+        ultimoSubsidioAplicado = detalleDespues.isr < detalleAntes.isr
 
-        val neto = bruto - detalleDepues.isr - imss - deduccionesManual
+        val neto = bruto - detalleDespues.isr - imss - deduccionesManual
         val netoRedondeado = (neto * 100).roundToInt() / 100.0
 
-        ultimoISR = detalleDepues.isr
+        ultimoISR = detalleDespues.isr
         ultimoIMSS = imss
         ultimoNeto = netoRedondeado
 
         binding.tvResultado.text = """
             💰 Sueldo Neto: ${String.format("%,.2f", netoRedondeado)} MXN
-            🔥 ISR: ${String.format("%,.2f", detalleDepues.isr)} MXN
+            🔥 ISR: ${String.format("%,.2f", detalleDespues.isr)} MXN
             🏥 IMSS (2.375%): ${String.format("%,.2f", imss)} MXN
             📋 Deducciones: ${String.format("%,.2f", deduccionesManual)} MXN
             
@@ -207,16 +201,11 @@ class MainActivity : AppCompatActivity() {
             TramoISR(1702567.93, 5107703.88, 444116.28, 34.00),
             TramoISR(5107703.89, Double.MAX_VALUE, 1601862.48, 35.00)
         )
-
         for (tramo in tramos) {
             if (gravable <= tramo.limSup) {
                 val excedente = gravable - tramo.limInf
                 val marginal = excedente * (tramo.tasa / 100)
-                return ISRDetalle(
-                    marginal + tramo.cuota,
-                    tramo.limInf, excedente,
-                    tramo.tasa, marginal, tramo.cuota
-                )
+                return ISRDetalle(marginal + tramo.cuota, tramo.limInf, excedente, tramo.tasa, marginal, tramo.cuota)
             }
         }
         return ISRDetalle(0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
@@ -257,6 +246,53 @@ class MainActivity : AppCompatActivity() {
         binding.chartGrafica.invalidate()
     }
 
+    private fun capturarGraficaBitmap(): Bitmap {
+        val bitmap = Bitmap.createBitmap(515, 260, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+        canvas.drawColor(Color.WHITE)
+        binding.chartGrafica.draw(canvas)
+        return bitmap
+    }
+
+    private fun dibujarHeaderPDF(canvas: android.graphics.Canvas, paint: Paint, titulo: String, fecha: String, nombreUsuario: String) {
+        // Fondo header verde esmeralda
+        paint.color = Color.parseColor("#004D39")
+        paint.style = Paint.Style.FILL
+        canvas.drawRect(0f, 0f, 595f, 110f, paint)
+
+        // Barra dorada inferior del header
+        paint.color = Color.parseColor("#D4AF37")
+        canvas.drawRect(0f, 105f, 595f, 112f, paint)
+
+        // Título en dorado
+        paint.color = Color.parseColor("#D4AF37")
+        paint.textSize = 20f
+        paint.isFakeBoldText = true
+        paint.style = Paint.Style.FILL
+        canvas.drawText(titulo, 40f, 45f, paint)
+
+        // Subtítulo blanco
+        paint.color = Color.WHITE
+        paint.textSize = 11f
+        paint.isFakeBoldText = false
+        canvas.drawText("ISR Calculadora MX 2026  •  Tablas SAT vigentes", 40f, 65f, paint)
+        canvas.drawText("Fecha: $fecha", 40f, 82f, paint)
+        canvas.drawText("Titular: $nombreUsuario", 40f, 98f, paint)
+    }
+
+    private fun dibujarFooterPDF(canvas: android.graphics.Canvas, paint: Paint) {
+        paint.color = Color.parseColor("#004D39")
+        paint.style = Paint.Style.FILL
+        canvas.drawRect(0f, 800f, 595f, 842f, paint)
+        paint.color = Color.parseColor("#D4AF37")
+        canvas.drawRect(0f, 797f, 595f, 801f, paint)
+        paint.color = Color.WHITE
+        paint.textSize = 9f
+        paint.isFakeBoldText = false
+        canvas.drawText("Generado por ISR Calculadora MX 2026  •  Cálculo estimado — no sustituye declaración oficial ante el SAT", 20f, 818f, paint)
+        canvas.drawText("Basado en tablas SAT 2026 oficiales  •  Versión Súper Premium", 20f, 832f, paint)
+    }
+
     private fun getNombreArchivo(sufijo: String): String {
         val nombreUsuario = binding.etNombre.text.toString().trim()
         return if (nombreUsuario.isNotEmpty()) {
@@ -269,54 +305,105 @@ class MainActivity : AppCompatActivity() {
     private fun generarYCompartirPDF(isr: Double, imss: Double, neto: Double) {
         try {
             val nombreUsuario = binding.etNombre.text.toString().trim().ifEmpty { "Contribuyente" }
-            val fecha = SimpleDateFormat("dd/MM/yyyy HH:mm:ss", Locale.getDefault()).format(Date())
+            val fecha = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(Date())
             val doc = PdfDocument()
             val page = doc.startPage(PdfDocument.PageInfo.Builder(595, 842, 1).create())
             val canvas = page.canvas
-            val paint = Paint()
-            paint.textSize = 20f
+            val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+
+            dibujarHeaderPDF(canvas, paint, "REPORTE PROFESIONAL ISR 2026", fecha, nombreUsuario)
+
+            var y = 140f
+            paint.style = Paint.Style.FILL
+
+            // Sección datos
+            paint.color = Color.parseColor("#004D39")
+            paint.textSize = 13f
             paint.isFakeBoldText = true
-            paint.color = android.graphics.Color.BLACK
-            canvas.drawText("REPORTE PROFESIONAL ISR 2026", 40f, 60f, paint)
+            canvas.drawText("DATOS DE ENTRADA", 40f, y, paint); y += 22f
+            paint.color = Color.parseColor("#D4AF37")
+            paint.strokeWidth = 1f
+            paint.style = Paint.Style.STROKE
+            canvas.drawLine(40f, y, 555f, y, paint); y += 16f
+            paint.style = Paint.Style.FILL
+            paint.color = Color.DKGRAY
             paint.textSize = 12f
             paint.isFakeBoldText = false
-            canvas.drawText("Fecha: $fecha", 40f, 85f, paint)
-            paint.strokeWidth = 2f
-            canvas.drawLine(40f, 95f, 555f, 95f, paint)
-            paint.textSize = 14f
+            canvas.drawText("Sueldo Bruto Mensual:", 50f, y, paint)
             paint.isFakeBoldText = true
-            canvas.drawText("Contribuyente: $nombreUsuario", 40f, 115f, paint)
+            canvas.drawText("${String.format("%,.2f", bruto)} MXN", 380f, y, paint); y += 20f
             paint.isFakeBoldText = false
-            var y = 145f
+            canvas.drawText("Deducciones Manuales:", 50f, y, paint)
             paint.isFakeBoldText = true
-            canvas.drawText("DATOS DE ENTRADA:", 40f, y, paint); y += 25f
+            canvas.drawText("${String.format("%,.2f", deduccionesManual)} MXN", 380f, y, paint); y += 20f
             paint.isFakeBoldText = false
-            canvas.drawText("• Sueldo Bruto: ${String.format("%,.2f", bruto)} MXN", 60f, y, paint); y += 20f
-            canvas.drawText("• Deducciones: ${String.format("%,.2f", deduccionesManual)} MXN", 60f, y, paint); y += 20f
-            canvas.drawText("• IMSS (2.375%): ${String.format("%,.2f", imss)} MXN", 60f, y, paint); y += 35f
-            canvas.drawLine(40f, y, 555f, y, paint); y += 25f
+            canvas.drawText("Cuota IMSS Obrera (2.375%):", 50f, y, paint)
             paint.isFakeBoldText = true
-            canvas.drawText("CÁLCULO ISR:", 40f, y, paint); y += 25f
+            canvas.drawText("${String.format("%,.2f", imss)} MXN", 380f, y, paint); y += 30f
+
+            // Sección ISR
+            paint.color = Color.parseColor("#004D39")
+            paint.textSize = 13f
+            paint.isFakeBoldText = true
+            canvas.drawText("CÁLCULO ISR", 40f, y, paint); y += 22f
+            paint.color = Color.parseColor("#D4AF37")
+            paint.style = Paint.Style.STROKE
+            canvas.drawLine(40f, y, 555f, y, paint); y += 16f
+            paint.style = Paint.Style.FILL
+            paint.color = Color.DKGRAY
+            paint.textSize = 12f
             paint.isFakeBoldText = false
-            canvas.drawText("• ISR calculado: ${String.format("%,.2f", isr)} MXN", 60f, y, paint); y += 20f
+            canvas.drawText("ISR Calculado:", 50f, y, paint)
+            paint.isFakeBoldText = true
+            canvas.drawText("${String.format("%,.2f", isr)} MXN", 380f, y, paint); y += 20f
             if (ultimoSubsidioAplicado) {
-                canvas.drawText("• Subsidio al empleo SAT 2026 aplicado: -\$536.22 MXN", 60f, y, paint); y += 20f
+                paint.isFakeBoldText = false
+                canvas.drawText("Subsidio al Empleo SAT 2026:", 50f, y, paint)
+                paint.isFakeBoldText = true
+                paint.color = Color.parseColor("#00796B")
+                canvas.drawText("-\$536.22 MXN", 380f, y, paint)
+                paint.color = Color.DKGRAY; y += 20f
             }
-            y += 15f
-            canvas.drawLine(40f, y, 555f, y, paint); y += 25f
-            paint.textSize = 18f
+            y += 10f
+
+            // Neto destacado
+            paint.color = Color.parseColor("#004D39")
+            paint.style = Paint.Style.FILL
+            val rect = RectF(35f, y, 560f, y + 50f)
+            canvas.drawRoundRect(rect, 8f, 8f, paint)
+            paint.color = Color.parseColor("#D4AF37")
+            paint.textSize = 16f
             paint.isFakeBoldText = true
-            canvas.drawText("SUELDO NETO FINAL: ${String.format("%,.2f", neto)} MXN", 40f, y, paint); y += 40f
-            paint.strokeWidth = 2f
-            canvas.drawLine(40f, y, 555f, y, paint); y += 25f
-            paint.isFakeBoldText = false
+            canvas.drawText("SUELDO NETO FINAL:", 50f, y + 22f, paint)
+            canvas.drawText("${String.format("%,.2f", neto)} MXN", 350f, y + 22f, paint)
+            paint.color = Color.WHITE
             paint.textSize = 10f
-            canvas.drawText("Generado por ISR Calculadora MX 2026 — Versión Súper Premium", 40f, y, paint); y += 15f
-            canvas.drawText("Basado en tablas SAT 2026. Cálculo estimado — no sustituye declaración oficial.", 40f, y, paint)
+            paint.isFakeBoldText = false
+            canvas.drawText("Ingreso disponible después de impuestos y deducciones", 50f, y + 40f, paint)
+            y += 70f
+
+            // Gráfica
+            if (ultimoNeto > 0 && binding.chartGrafica.visibility == View.VISIBLE) {
+                paint.color = Color.parseColor("#004D39")
+                paint.textSize = 13f
+                paint.isFakeBoldText = true
+                canvas.drawText("DESGLOSE VISUAL", 40f, y, paint); y += 22f
+                paint.color = Color.parseColor("#D4AF37")
+                paint.style = Paint.Style.STROKE
+                canvas.drawLine(40f, y, 555f, y, paint); y += 10f
+                paint.style = Paint.Style.FILL
+                val graficaBitmap = capturarGraficaBitmap()
+                canvas.drawBitmap(graficaBitmap, 40f, y, null)
+                y += 270f
+            }
+
+            dibujarFooterPDF(canvas, paint)
             doc.finishPage(page)
+
             val file = File(getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), getNombreArchivo("Compartir"))
             doc.writeTo(FileOutputStream(file))
             doc.close()
+
             val uri = FileProvider.getUriForFile(this, "${packageName}.provider", file)
             val intent = Intent(Intent.ACTION_SEND).apply {
                 type = "application/pdf"
@@ -336,34 +423,60 @@ class MainActivity : AppCompatActivity() {
             val doc = PdfDocument()
             val page = doc.startPage(PdfDocument.PageInfo.Builder(595, 842, 1).create())
             val canvas = page.canvas
-            val paint = Paint()
-            paint.textSize = 18f
+            val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+
+            dibujarHeaderPDF(canvas, paint, "REPORTE PREMIUM ISR 2026", fecha, nombreUsuario)
+
+            var y = 140f
+            paint.style = Paint.Style.FILL
+            paint.color = Color.parseColor("#004D39")
+            paint.textSize = 13f
             paint.isFakeBoldText = true
-            paint.color = android.graphics.Color.BLACK
-            canvas.drawText("ISR Calculadora MX 2026 — Reporte Premium", 40f, 60f, paint)
+            canvas.drawText("RESUMEN FISCAL", 40f, y, paint); y += 22f
+            paint.color = Color.parseColor("#D4AF37")
+            paint.style = Paint.Style.STROKE
+            canvas.drawLine(40f, y, 555f, y, paint); y += 16f
+            paint.style = Paint.Style.FILL
+            paint.color = Color.DKGRAY
             paint.textSize = 12f
             paint.isFakeBoldText = false
-            canvas.drawText("Fecha: $fecha", 40f, 80f, paint)
-            paint.textSize = 14f
+            canvas.drawText("Sueldo Bruto:", 50f, y, paint)
             paint.isFakeBoldText = true
-            canvas.drawText("Contribuyente: $nombreUsuario", 40f, 100f, paint)
+            canvas.drawText("${String.format("%,.2f", bruto)} MXN", 380f, y, paint); y += 20f
             paint.isFakeBoldText = false
-            var y = 130f
-            canvas.drawText("Sueldo Bruto: ${String.format("%,.2f", bruto)} MXN", 40f, y, paint); y += 25f
-            canvas.drawText("Deducciones: ${String.format("%,.2f", deduccionesManual)} MXN", 40f, y, paint); y += 25f
-            canvas.drawText("IMSS (2.375%): ${String.format("%,.2f", imss)} MXN", 40f, y, paint); y += 25f
-            canvas.drawText("ISR: ${String.format("%,.2f", isr)} MXN", 40f, y, paint); y += 25f
+            canvas.drawText("IMSS (2.375%):", 50f, y, paint)
+            paint.isFakeBoldText = true
+            canvas.drawText("${String.format("%,.2f", imss)} MXN", 380f, y, paint); y += 20f
+            paint.isFakeBoldText = false
+            canvas.drawText("ISR Retenido:", 50f, y, paint)
+            paint.isFakeBoldText = true
+            canvas.drawText("${String.format("%,.2f", isr)} MXN", 380f, y, paint); y += 20f
             if (ultimoSubsidioAplicado) {
-                canvas.drawText("Subsidio al empleo SAT 2026: -\$536.22 MXN", 40f, y, paint); y += 25f
+                paint.isFakeBoldText = false
+                canvas.drawText("Subsidio al Empleo:", 50f, y, paint)
+                paint.isFakeBoldText = true
+                paint.color = Color.parseColor("#00796B")
+                canvas.drawText("-\$536.22 MXN", 380f, y, paint)
+                paint.color = Color.DKGRAY; y += 20f
             }
-            y += 10f
-            paint.isFakeBoldText = true
+            y += 15f
+            paint.color = Color.parseColor("#004D39")
+            paint.style = Paint.Style.FILL
+            val rect = RectF(35f, y, 560f, y + 50f)
+            canvas.drawRoundRect(rect, 8f, 8f, paint)
+            paint.color = Color.parseColor("#D4AF37")
             paint.textSize = 16f
-            canvas.drawText("SUELDO NETO: ${String.format("%,.2f", neto)} MXN", 40f, y, paint); y += 30f
+            paint.isFakeBoldText = true
+            canvas.drawText("SUELDO NETO:", 50f, y + 22f, paint)
+            canvas.drawText("${String.format("%,.2f", neto)} MXN", 350f, y + 22f, paint)
+            paint.color = Color.WHITE
+            paint.textSize = 10f
             paint.isFakeBoldText = false
-            paint.textSize = 11f
-            canvas.drawText("Cálculo estimado — no sustituye declaración oficial ante el SAT", 40f, y, paint)
+            canvas.drawText("Ingreso disponible después de impuestos", 50f, y + 40f, paint)
+
+            dibujarFooterPDF(canvas, paint)
             doc.finishPage(page)
+
             val file = File(getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), getNombreArchivo("Premium"))
             doc.writeTo(FileOutputStream(file))
             val uri = FileProvider.getUriForFile(this, "${packageName}.provider", file)
@@ -382,51 +495,93 @@ class MainActivity : AppCompatActivity() {
     private fun generarPDFProfesional(isr: Double, imss: Double, neto: Double) {
         try {
             val nombreUsuario = binding.etNombre.text.toString().trim().ifEmpty { "Contribuyente" }
-            val fecha = SimpleDateFormat("dd/MM/yyyy HH:mm:ss", Locale.getDefault()).format(Date())
+            val fecha = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(Date())
             val doc = PdfDocument()
             val page = doc.startPage(PdfDocument.PageInfo.Builder(595, 842, 1).create())
             val canvas = page.canvas
-            val paint = Paint()
-            paint.textSize = 20f
+            val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+
+            dibujarHeaderPDF(canvas, paint, "REPORTE PROFESIONAL ISR 2026", fecha, nombreUsuario)
+
+            var y = 140f
+            paint.style = Paint.Style.FILL
+            paint.color = Color.parseColor("#004D39")
+            paint.textSize = 13f
             paint.isFakeBoldText = true
-            paint.color = android.graphics.Color.BLACK
-            canvas.drawText("REPORTE PROFESIONAL ISR 2026", 40f, 60f, paint)
+            canvas.drawText("DATOS DE ENTRADA", 40f, y, paint); y += 22f
+            paint.color = Color.parseColor("#D4AF37")
+            paint.style = Paint.Style.STROKE
+            canvas.drawLine(40f, y, 555f, y, paint); y += 16f
+            paint.style = Paint.Style.FILL
+            paint.color = Color.DKGRAY
             paint.textSize = 12f
             paint.isFakeBoldText = false
-            canvas.drawText("Fecha: $fecha", 40f, 85f, paint)
-            paint.strokeWidth = 2f
-            canvas.drawLine(40f, 95f, 555f, 95f, paint)
-            paint.textSize = 14f
+            canvas.drawText("Sueldo Bruto Mensual:", 50f, y, paint)
             paint.isFakeBoldText = true
-            canvas.drawText("Contribuyente: $nombreUsuario", 40f, 115f, paint)
+            canvas.drawText("${String.format("%,.2f", bruto)} MXN", 380f, y, paint); y += 20f
             paint.isFakeBoldText = false
-            var y = 145f
+            canvas.drawText("Deducciones Manuales:", 50f, y, paint)
             paint.isFakeBoldText = true
-            canvas.drawText("DATOS DE ENTRADA:", 40f, y, paint); y += 25f
+            canvas.drawText("${String.format("%,.2f", deduccionesManual)} MXN", 380f, y, paint); y += 20f
             paint.isFakeBoldText = false
-            canvas.drawText("• Sueldo Bruto: ${String.format("%,.2f", bruto)} MXN", 60f, y, paint); y += 20f
-            canvas.drawText("• Deducciones: ${String.format("%,.2f", deduccionesManual)} MXN", 60f, y, paint); y += 20f
-            canvas.drawText("• IMSS (2.375%): ${String.format("%,.2f", imss)} MXN", 60f, y, paint); y += 35f
-            canvas.drawLine(40f, y, 555f, y, paint); y += 25f
+            canvas.drawText("Cuota IMSS Obrera (2.375%):", 50f, y, paint)
             paint.isFakeBoldText = true
-            canvas.drawText("CÁLCULO ISR:", 40f, y, paint); y += 25f
+            canvas.drawText("${String.format("%,.2f", imss)} MXN", 380f, y, paint); y += 30f
+
+            paint.color = Color.parseColor("#004D39")
+            paint.textSize = 13f
+            paint.isFakeBoldText = true
+            canvas.drawText("CÁLCULO ISR", 40f, y, paint); y += 22f
+            paint.color = Color.parseColor("#D4AF37")
+            paint.style = Paint.Style.STROKE
+            canvas.drawLine(40f, y, 555f, y, paint); y += 16f
+            paint.style = Paint.Style.FILL
+            paint.color = Color.DKGRAY
+            paint.textSize = 12f
             paint.isFakeBoldText = false
-            canvas.drawText("• ISR calculado: ${String.format("%,.2f", isr)} MXN", 60f, y, paint); y += 20f
+            canvas.drawText("ISR Calculado:", 50f, y, paint)
+            paint.isFakeBoldText = true
+            canvas.drawText("${String.format("%,.2f", isr)} MXN", 380f, y, paint); y += 20f
             if (ultimoSubsidioAplicado) {
-                canvas.drawText("• Subsidio al empleo SAT 2026 aplicado: -\$536.22 MXN", 60f, y, paint); y += 20f
+                paint.isFakeBoldText = false
+                canvas.drawText("Subsidio al Empleo SAT 2026:", 50f, y, paint)
+                paint.isFakeBoldText = true
+                paint.color = Color.parseColor("#00796B")
+                canvas.drawText("-\$536.22 MXN", 380f, y, paint)
+                paint.color = Color.DKGRAY; y += 20f
             }
-            y += 15f
-            canvas.drawLine(40f, y, 555f, y, paint); y += 25f
-            paint.textSize = 18f
+            y += 10f
+
+            paint.color = Color.parseColor("#004D39")
+            paint.style = Paint.Style.FILL
+            val rect = RectF(35f, y, 560f, y + 50f)
+            canvas.drawRoundRect(rect, 8f, 8f, paint)
+            paint.color = Color.parseColor("#D4AF37")
+            paint.textSize = 16f
             paint.isFakeBoldText = true
-            canvas.drawText("SUELDO NETO FINAL: ${String.format("%,.2f", neto)} MXN", 40f, y, paint); y += 40f
-            paint.strokeWidth = 2f
-            canvas.drawLine(40f, y, 555f, y, paint); y += 25f
-            paint.isFakeBoldText = false
+            canvas.drawText("SUELDO NETO FINAL:", 50f, y + 22f, paint)
+            canvas.drawText("${String.format("%,.2f", neto)} MXN", 350f, y + 22f, paint)
+            paint.color = Color.WHITE
             paint.textSize = 10f
-            canvas.drawText("Generado por ISR Calculadora MX 2026 — Versión Súper Premium", 40f, y, paint); y += 15f
-            canvas.drawText("Basado en tablas SAT 2026. Cálculo estimado — no sustituye declaración oficial.", 40f, y, paint)
+            paint.isFakeBoldText = false
+            canvas.drawText("Ingreso disponible después de impuestos y deducciones", 50f, y + 40f, paint)
+            y += 70f
+
+            // Gráfica exportada
+            paint.color = Color.parseColor("#004D39")
+            paint.textSize = 13f
+            paint.isFakeBoldText = true
+            canvas.drawText("DESGLOSE VISUAL", 40f, y, paint); y += 22f
+            paint.color = Color.parseColor("#D4AF37")
+            paint.style = Paint.Style.STROKE
+            canvas.drawLine(40f, y, 555f, y, paint); y += 10f
+            paint.style = Paint.Style.FILL
+            val graficaBitmap = capturarGraficaBitmap()
+            canvas.drawBitmap(graficaBitmap, 40f, y, null)
+
+            dibujarFooterPDF(canvas, paint)
             doc.finishPage(page)
+
             val file = File(getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), getNombreArchivo("SuperPremium"))
             doc.writeTo(FileOutputStream(file))
             val uri = FileProvider.getUriForFile(this, "${packageName}.provider", file)
