@@ -165,11 +165,12 @@
                     android:textColor="#000000" />
             </LinearLayout>
 
-            <FrameLayout
+            <com.google.android.gms.ads.AdView
                 android:id="@+id/adView"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp" />
+                app:adSize="BANNER"
+                app:adUnitId="ca-app-pub-3940256099942544/6300978111" />
 
         </LinearLayout>
     </ScrollView>
