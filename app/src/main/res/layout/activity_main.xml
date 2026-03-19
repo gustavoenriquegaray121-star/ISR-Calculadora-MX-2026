@@ -30,29 +30,40 @@
                 android:layout_height="150dp"
                 android:src="@drawable/logo_app"
                 android:scaleType="fitCenter"
-                android:layout_marginBottom="20dp" />
+                android:layout_marginBottom="8dp" />
 
             <TextView
                 android:id="@+id/tvTitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="ISR Calculadora MX 2026"
-                android:textColor="#FFFFFF"
-                android:textSize="24sp"
+                android:text="Cálculo de Impuestos en Minutos"
+                android:textColor="#FFD700"
+                android:textSize="22sp"
                 android:textStyle="bold"
                 android:gravity="center"
-                android:layout_marginBottom="30dp" />
+                android:layout_marginBottom="4dp" />
+
+            <TextView
+                android:id="@+id/tvSubtitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Resultados Profesionales en Instantes"
+                android:textColor="#FFFFFF"
+                android:textSize="14sp"
+                android:gravity="center"
+                android:layout_marginBottom="24dp" />
 
             <EditText
                 android:id="@+id/etNombre"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Tu nombre (opcional)"
+                android:hint="Tu nombre (para personalizar PDF)"
                 android:inputType="textPersonName"
                 android:textColor="#FFFFFF"
                 android:background="@drawable/edittext_gold_glow"
                 android:padding="16dp"
-                android:layout_marginBottom="16dp" />
+                android:layout_marginBottom="16dp"
+                android:visibility="gone" />
 
             <EditText
                 android:id="@+id/etSueldoBruto"
@@ -141,7 +152,10 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:textColor="#FFFFFF"
-                        android:textStyle="italic" />
+                        android:textStyle="italic"
+                        android:maxLines="4"
+                        android:ellipsize="none"
+                        android:scrollHorizontally="false" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
@@ -154,26 +168,28 @@
 
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="60dp"
                 android:orientation="horizontal"
                 android:layout_marginBottom="24dp">
                 <Button
                     android:id="@+id/btnUpgradePremium"
                     android:layout_width="0dp"
                     android:layout_weight="1"
-                    android:layout_height="wrap_content"
-                    android:text="💎 Premium"
+                    android:layout_height="match_parent"
+                    android:text="💎 Premium&#10;$119 pago único"
                     android:backgroundTint="#FF8F00"
                     android:textColor="#FFFFFF"
+                    android:textSize="12sp"
                     android:layout_marginEnd="8dp" />
                 <Button
                     android:id="@+id/btnUpgradeSuperPremium"
                     android:layout_width="0dp"
                     android:layout_weight="1"
-                    android:layout_height="wrap_content"
-                    android:text="👑 Súper Premium"
+                    android:layout_height="match_parent"
+                    android:text="👑 Súper Premium&#10;$149 pago único"
                     android:backgroundTint="#D4AF37"
-                    android:textColor="#000000" />
+                    android:textColor="#000000"
+                    android:textSize="12sp" />
             </LinearLayout>
 
             <com.google.android.gms.ads.AdView
