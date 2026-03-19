@@ -66,6 +66,18 @@
                 android:visibility="gone" />
 
             <EditText
+                android:id="@+id/etDespacho"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Nombre del Despacho (opcional)"
+                android:inputType="textCapWords"
+                android:textColor="#FFFFFF"
+                android:background="@drawable/edittext_gold_glow"
+                android:padding="16dp"
+                android:layout_marginBottom="16dp"
+                android:visibility="gone" />
+
+            <EditText
                 android:id="@+id/etSueldoBruto"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
