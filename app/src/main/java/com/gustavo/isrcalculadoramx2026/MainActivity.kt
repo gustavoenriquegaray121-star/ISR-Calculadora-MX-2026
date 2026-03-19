@@ -8,7 +8,6 @@ import android.os.Environment
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.github.mikephil.charting.data.PieData
 import com.github.mikephil.charting.data.PieDataSet
 import com.github.mikephil.charting.data.PieEntry
@@ -49,7 +48,9 @@ class MainActivity : AppCompatActivity() {
     private var deduccionesManual = 0.0
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        installSplashScreen()
+        // Cambiar del tema Splash al tema normal de la app
+        setTheme(R.style.Theme_ISRCalculadoraMX2026)
+
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
