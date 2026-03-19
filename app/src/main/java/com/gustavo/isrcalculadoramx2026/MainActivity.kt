@@ -6,11 +6,14 @@ import android.graphics.pdf.PdfDocument
 import android.os.Bundle
 import android.os.Environment
 import android.view.View
+import android.widget.Button
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.github.mikephil.charting.data.PieData
 import com.github.mikephil.charting.data.PieDataSet
 import com.github.mikephil.charting.data.PieEntry
+import com.google.android.gms.ads.AdRequest
+import com.google.android.gms.ads.MobileAds
 import com.gustavo.isrcalculadoramx2026.databinding.ActivityMainBinding
 import java.io.File
 import java.io.FileOutputStream
@@ -48,12 +51,16 @@ class MainActivity : AppCompatActivity() {
     private var deduccionesManual = 0.0
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        // Cambiar del tema Splash al tema normal de la app
         setTheme(R.style.Theme_ISRCalculadoraMX2026)
 
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        // Inicializar AdMob
+        MobileAds.initialize(this) {}
+        val adRequest = AdRequest.Builder().build()
+        binding.adView.loadAd(adRequest)
 
         binding.tvEmote.alpha = 0f
         binding.tvResultado.text = ""
@@ -77,13 +84,37 @@ class MainActivity : AppCompatActivity() {
             isSuperPremium = true
             isPremium = true
             binding.adView.visibility = View.GONE
-            Toast.makeText(this,
-                "👑 Súper Premium desbloqueado — $149/mes o $1,299/año",
-                Toast.LENGTH_LONG).show()
+
+            val dialog = android.app.Dialog(this)
+            dialog.setContentView(R.layout.dialog_premium)
+            dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+
+            val btnShare = dialog.findViewById<Button>(R.id.btn_share_pdf)
+            val btnSave = dialog.findViewById<Button>(R.id.btn_save_pdf)
+
+            btnShare.setOnClickListener {
+                if (ultimoNeto > 0) {
+                    generarYCompartirPDF(ultimoISR, ultimoIMSS, ultimoNeto)
+                } else {
+                    Toast.makeText(this, "😅 Primero calcula un sueldo", Toast.LENGTH_SHORT).show()
+                }
+                dialog.dismiss()
+            }
+
+            btnSave.setOnClickListener {
+                if (ultimoNeto > 0) {
+                    generarPDFProfesional(ultimoISR, ultimoIMSS, ultimoNeto)
+                } else {
+                    Toast.makeText(this, "😅 Primero calcula un sueldo", Toast.LENGTH_SHORT).show()
+                }
+                dialog.dismiss()
+            }
+
+            dialog.show()
+
             if (ultimoNeto > 0) {
                 binding.chartGrafica.visibility = View.VISIBLE
                 dibujarGrafica(ultimoISR, ultimoIMSS, ultimoNeto)
-                generarPDFProfesional(ultimoISR, ultimoIMSS, ultimoNeto)
             }
         }
     }
@@ -209,6 +240,69 @@ class MainActivity : AppCompatActivity() {
         binding.chartGrafica.transparentCircleRadius = 55f
         binding.chartGrafica.setHoleColor(Color.TRANSPARENT)
         binding.chartGrafica.invalidate()
+    }
+
+    private fun generarYCompartirPDF(isr: Double, imss: Double, neto: Double) {
+        try {
+            val doc = PdfDocument()
+            val page = doc.startPage(PdfDocument.PageInfo.Builder(595, 842, 1).create())
+            val canvas = page.canvas
+            val paint = Paint()
+            val fecha = SimpleDateFormat("dd/MM/yyyy HH:mm:ss", Locale.getDefault()).format(Date())
+            paint.textSize = 20f
+            paint.isFakeBoldText = true
+            paint.color = android.graphics.Color.BLACK
+            canvas.drawText("REPORTE PROFESIONAL ISR 2026", 40f, 60f, paint)
+            paint.textSize = 12f
+            paint.isFakeBoldText = false
+            canvas.drawText("Fecha: $fecha", 40f, 85f, paint)
+            paint.strokeWidth = 2f
+            canvas.drawLine(40f, 95f, 555f, 95f, paint)
+            paint.textSize = 14f
+            var y = 120f
+            paint.isFakeBoldText = true
+            canvas.drawText("DATOS DE ENTRADA:", 40f, y, paint); y += 25f
+            paint.isFakeBoldText = false
+            canvas.drawText("• Sueldo Bruto: ${String.format("%,.2f", bruto)} MXN", 60f, y, paint); y += 20f
+            canvas.drawText("• Deducciones: ${String.format("%,.2f", deduccionesManual)} MXN", 60f, y, paint); y += 20f
+            canvas.drawText("• IMSS (2.375%): ${String.format("%,.2f", imss)} MXN", 60f, y, paint); y += 35f
+            canvas.drawLine(40f, y, 555f, y, paint); y += 25f
+            paint.isFakeBoldText = true
+            canvas.drawText("CÁLCULO ISR:", 40f, y, paint); y += 25f
+            paint.isFakeBoldText = false
+            canvas.drawText("• ISR calculado: ${String.format("%,.2f", isr)} MXN", 60f, y, paint); y += 20f
+            canvas.drawText("• Subsidio al empleo SAT 2026: $536.22 MXN", 60f, y, paint); y += 35f
+            canvas.drawLine(40f, y, 555f, y, paint); y += 25f
+            paint.textSize = 18f
+            paint.isFakeBoldText = true
+            canvas.drawText("SUELDO NETO FINAL: ${String.format("%,.2f", neto)} MXN", 40f, y, paint); y += 40f
+            paint.strokeWidth = 2f
+            canvas.drawLine(40f, y, 555f, y, paint); y += 25f
+            paint.isFakeBoldText = false
+            paint.textSize = 10f
+            canvas.drawText("Generado por ISR Calculadora MX 2026 — Versión Súper Premium", 40f, y, paint); y += 15f
+            canvas.drawText("Basado en tablas SAT 2026. Cálculo estimado — no sustituye declaración oficial.", 40f, y, paint)
+            doc.finishPage(page)
+            val file = File(getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS),
+                "ISR_Compartir_${System.currentTimeMillis()}.pdf")
+            doc.writeTo(FileOutputStream(file))
+            doc.close()
+
+            val uri = androidx.core.content.FileProvider.getUriForFile(
+                this,
+                "${packageName}.provider",
+                file
+            )
+            val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                type = "application/pdf"
+                putExtra(android.content.Intent.EXTRA_STREAM, uri)
+                addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            startActivity(android.content.Intent.createChooser(intent, "Compartir reporte ISR"))
+
+        } catch (e: Exception) {
+            Toast.makeText(this, "❌ Error: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun generarPDFGenerico(isr: Double, imss: Double, neto: Double) {
