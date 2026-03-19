@@ -333,10 +333,3 @@
         </LinearLayout>
     </ScrollView>
 </FrameLayout>
-Ruta: app/src/main/res/layout/activity_main.xml
-También actualiza el MainActivity.kt — busca los dos Toasts de los botones y cámbialos:
-// Premium
-"💎 Premium desbloqueado — \$699/año"
-
-// Súper Premium  
-"👑 Súper Premium desbloqueado — \$899/año"
