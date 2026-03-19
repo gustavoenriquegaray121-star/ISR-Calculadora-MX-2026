@@ -49,8 +49,21 @@ class MainActivity : AppCompatActivity() {
     private var ultimoISR = 0.0
     private var ultimoIMSS = 0.0
     private var ultimoNeto = 0.0
+    private var ultimoSubsidioAplicado = false
     private var bruto = 0.0
     private var deduccionesManual = 0.0
+
+    private val listaTips = listOf(
+        "Los honorarios médicos, dentales y de nutrición pagados con tarjeta son deducibles en tu declaración anual.",
+        "Las colegiaturas son deducibles. Necesitas el CFDI con el nivel educativo y CURP del alumno.",
+        "¿Pagando tu casa? Los intereses reales de créditos hipotecarios son deducciones personales.",
+        "Las aportaciones voluntarias a tu AFORE no solo aseguran tu futuro, también reducen tu ISR.",
+        "Los gastos por lentes ópticos graduados (hasta $2,500 MXN) son deducibles para ti o tu familia.",
+        "Las donaciones a instituciones donatarias autorizadas son deducibles — revisa los topes anuales.",
+        "Si trabajas por honorarios, tus herramientas de trabajo (computadora, software) pueden ser deducciones autorizadas.",
+        "Estás en el tramo superior de ISR. Considera un PPR para deducir hasta el 10% anual legalmente.",
+        "Tus gastos de lentes graduados y transporte escolar son deducibles. ¡Pide factura XML!"
+    )
 
     override fun onCreate(savedInstanceState: Bundle?) {
         setTheme(R.style.Theme_ISRCalculadoraMX2026)
@@ -72,7 +85,7 @@ class MainActivity : AppCompatActivity() {
             isPremium = true
             binding.adView.visibility = View.GONE
             Toast.makeText(this,
-                "💎 Premium desbloqueado — $99/mes o $699/año",
+                "💎 Premium desbloqueado — $119 pago único",
                 Toast.LENGTH_LONG).show()
             if (ultimoNeto > 0) {
                 binding.chartGrafica.visibility = View.VISIBLE
@@ -85,6 +98,7 @@ class MainActivity : AppCompatActivity() {
             isSuperPremium = true
             isPremium = true
             binding.adView.visibility = View.GONE
+            binding.etNombre.visibility = View.VISIBLE
 
             val dialog = android.app.Dialog(this)
             dialog.setContentView(R.layout.dialog_premium)
@@ -137,19 +151,20 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        var detalle = calcularISRDetalle(gravable)
-        detalle = aplicarSubsidio(detalle, gravable)
+        val detalleAntes = calcularISRDetalle(gravable)
+        val detalleDepues = aplicarSubsidio(detalleAntes, gravable)
+        ultimoSubsidioAplicado = detalleDepues.isr < detalleAntes.isr
 
-        val neto = bruto - detalle.isr - imss - deduccionesManual
+        val neto = bruto - detalleDepues.isr - imss - deduccionesManual
         val netoRedondeado = (neto * 100).roundToInt() / 100.0
 
-        ultimoISR = detalle.isr
+        ultimoISR = detalleDepues.isr
         ultimoIMSS = imss
         ultimoNeto = netoRedondeado
 
         binding.tvResultado.text = """
             💰 Sueldo Neto: ${String.format("%,.2f", netoRedondeado)} MXN
-            🔥 ISR: ${String.format("%,.2f", detalle.isr)} MXN
+            🔥 ISR: ${String.format("%,.2f", detalleDepues.isr)} MXN
             🏥 IMSS (2.375%): ${String.format("%,.2f", imss)} MXN
             📋 Deducciones: ${String.format("%,.2f", deduccionesManual)} MXN
             
@@ -165,8 +180,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         binding.tvEmote.animate().alpha(1f).setDuration(600).start()
-
-        mostrarTipFiscal(bruto)
+        mostrarTipFiscal()
 
         if (isPremium) {
             binding.chartGrafica.visibility = View.VISIBLE
@@ -174,14 +188,9 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun mostrarTipFiscal(sueldoBruto: Double) {
+    private fun mostrarTipFiscal() {
         binding.cardTipFiscal.visibility = View.VISIBLE
-        val tip = when {
-            sueldoBruto > 60000 -> "🚀 Tip: Estás en el tramo superior de ISR. Considera un PPR para deducir hasta el 10% anual legalmente."
-            sueldoBruto > 25000 -> "💡 Tip: Tus gastos de lentes graduados y transporte escolar son deducibles. ¡Pide factura XML!"
-            else -> "✨ Tip: Los honorarios médicos y dentales pagados con tarjeta son deducibles en tu declaración anual."
-        }
-        binding.tvTipTexto.text = tip
+        binding.tvTipTexto.text = listaTips.random()
     }
 
     private fun calcularISRDetalle(gravable: Double): ISRDetalle {
@@ -219,27 +228,32 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun dibujarGrafica(isr: Double, imss: Double, neto: Double) {
-        val entries = listOf(
-            PieEntry(isr.toFloat(), "ISR"),
-            PieEntry(imss.toFloat(), "IMSS"),
-            PieEntry(neto.toFloat(), "Neto")
-        )
-        val dataSet = PieDataSet(entries, "Desglose")
-        dataSet.colors = listOf(
-            Color.parseColor("#FFD700"),
-            Color.parseColor("#FF8F00"),
-            Color.parseColor("#00C853")
-        )
+        val entries = mutableListOf<PieEntry>()
+        if (isr > 0) entries.add(PieEntry(isr.toFloat(), "ISR"))
+        if (imss > 0) entries.add(PieEntry(imss.toFloat(), "IMSS"))
+        entries.add(PieEntry(neto.toFloat(), "Neto"))
+
+        val colors = mutableListOf<Int>()
+        if (isr > 0) colors.add(Color.parseColor("#FFD700"))
+        if (imss > 0) colors.add(Color.parseColor("#FF8F00"))
+        colors.add(Color.parseColor("#00C853"))
+
+        val dataSet = PieDataSet(entries, "")
+        dataSet.colors = colors
         dataSet.valueTextColor = Color.WHITE
-        dataSet.valueTextSize = 14f
+        dataSet.valueTextSize = 13f
+        dataSet.sliceSpace = 3f
+        dataSet.selectionShift = 8f
+
         binding.chartGrafica.data = PieData(dataSet)
+        binding.chartGrafica.setUsePercentValues(true)
+        binding.chartGrafica.setDrawHoleEnabled(false)
         binding.chartGrafica.setEntryLabelColor(Color.WHITE)
+        binding.chartGrafica.setEntryLabelTextSize(12f)
         binding.chartGrafica.description.isEnabled = false
         binding.chartGrafica.legend.textColor = Color.WHITE
-        binding.chartGrafica.setDrawHoleEnabled(true)
-        binding.chartGrafica.holeRadius = 50f
-        binding.chartGrafica.transparentCircleRadius = 55f
-        binding.chartGrafica.setHoleColor(Color.TRANSPARENT)
+        binding.chartGrafica.legend.textSize = 12f
+        binding.chartGrafica.setExtraOffsets(16f, 16f, 16f, 16f)
         binding.chartGrafica.invalidate()
     }
 
@@ -254,8 +268,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun generarYCompartirPDF(isr: Double, imss: Double, neto: Double) {
         try {
-            val nombreUsuario = binding.etNombre.text.toString().trim()
-                .ifEmpty { "Contribuyente" }
+            val nombreUsuario = binding.etNombre.text.toString().trim().ifEmpty { "Contribuyente" }
             val fecha = SimpleDateFormat("dd/MM/yyyy HH:mm:ss", Locale.getDefault()).format(Date())
             val doc = PdfDocument()
             val page = doc.startPage(PdfDocument.PageInfo.Builder(595, 842, 1).create())
@@ -286,7 +299,10 @@ class MainActivity : AppCompatActivity() {
             canvas.drawText("CÁLCULO ISR:", 40f, y, paint); y += 25f
             paint.isFakeBoldText = false
             canvas.drawText("• ISR calculado: ${String.format("%,.2f", isr)} MXN", 60f, y, paint); y += 20f
-            canvas.drawText("• Subsidio al empleo SAT 2026: $536.22 MXN", 60f, y, paint); y += 35f
+            if (ultimoSubsidioAplicado) {
+                canvas.drawText("• Subsidio al empleo SAT 2026 aplicado: -\$536.22 MXN", 60f, y, paint); y += 20f
+            }
+            y += 15f
             canvas.drawLine(40f, y, 555f, y, paint); y += 25f
             paint.textSize = 18f
             paint.isFakeBoldText = true
@@ -315,8 +331,8 @@ class MainActivity : AppCompatActivity() {
 
     private fun generarPDFGenerico(isr: Double, imss: Double, neto: Double) {
         try {
-            val nombreUsuario = binding.etNombre.text.toString().trim()
-                .ifEmpty { "Contribuyente" }
+            val nombreUsuario = binding.etNombre.text.toString().trim().ifEmpty { "Contribuyente" }
+            val fecha = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date())
             val doc = PdfDocument()
             val page = doc.startPage(PdfDocument.PageInfo.Builder(595, 842, 1).create())
             val canvas = page.canvas
@@ -324,17 +340,23 @@ class MainActivity : AppCompatActivity() {
             paint.textSize = 18f
             paint.isFakeBoldText = true
             paint.color = android.graphics.Color.BLACK
-            canvas.drawText("ISR Calculadora MX 2026 - Reporte Premium", 40f, 60f, paint)
+            canvas.drawText("ISR Calculadora MX 2026 — Reporte Premium", 40f, 60f, paint)
+            paint.textSize = 12f
+            paint.isFakeBoldText = false
+            canvas.drawText("Fecha: $fecha", 40f, 80f, paint)
             paint.textSize = 14f
             paint.isFakeBoldText = true
-            canvas.drawText("Contribuyente: $nombreUsuario", 40f, 85f, paint)
+            canvas.drawText("Contribuyente: $nombreUsuario", 40f, 100f, paint)
             paint.isFakeBoldText = false
-            var y = 115f
+            var y = 130f
             canvas.drawText("Sueldo Bruto: ${String.format("%,.2f", bruto)} MXN", 40f, y, paint); y += 25f
             canvas.drawText("Deducciones: ${String.format("%,.2f", deduccionesManual)} MXN", 40f, y, paint); y += 25f
             canvas.drawText("IMSS (2.375%): ${String.format("%,.2f", imss)} MXN", 40f, y, paint); y += 25f
             canvas.drawText("ISR: ${String.format("%,.2f", isr)} MXN", 40f, y, paint); y += 25f
-            canvas.drawText("Subsidio SAT 2026: $536.22 MXN", 40f, y, paint); y += 35f
+            if (ultimoSubsidioAplicado) {
+                canvas.drawText("Subsidio al empleo SAT 2026: -\$536.22 MXN", 40f, y, paint); y += 25f
+            }
+            y += 10f
             paint.isFakeBoldText = true
             paint.textSize = 16f
             canvas.drawText("SUELDO NETO: ${String.format("%,.2f", neto)} MXN", 40f, y, paint); y += 30f
@@ -359,8 +381,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun generarPDFProfesional(isr: Double, imss: Double, neto: Double) {
         try {
-            val nombreUsuario = binding.etNombre.text.toString().trim()
-                .ifEmpty { "Contribuyente" }
+            val nombreUsuario = binding.etNombre.text.toString().trim().ifEmpty { "Contribuyente" }
             val fecha = SimpleDateFormat("dd/MM/yyyy HH:mm:ss", Locale.getDefault()).format(Date())
             val doc = PdfDocument()
             val page = doc.startPage(PdfDocument.PageInfo.Builder(595, 842, 1).create())
@@ -391,7 +412,10 @@ class MainActivity : AppCompatActivity() {
             canvas.drawText("CÁLCULO ISR:", 40f, y, paint); y += 25f
             paint.isFakeBoldText = false
             canvas.drawText("• ISR calculado: ${String.format("%,.2f", isr)} MXN", 60f, y, paint); y += 20f
-            canvas.drawText("• Subsidio al empleo SAT 2026: $536.22 MXN", 60f, y, paint); y += 35f
+            if (ultimoSubsidioAplicado) {
+                canvas.drawText("• Subsidio al empleo SAT 2026 aplicado: -\$536.22 MXN", 60f, y, paint); y += 20f
+            }
+            y += 15f
             canvas.drawLine(40f, y, 555f, y, paint); y += 25f
             paint.textSize = 18f
             paint.isFakeBoldText = true
