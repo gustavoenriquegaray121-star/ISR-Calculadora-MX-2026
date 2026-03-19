@@ -1,5 +1,3 @@
-.github/workflows/build.yml
-Y dentro pega esto:
 name: Build ISR APK
 
 on: [push, workflow_dispatch]
@@ -17,8 +15,13 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
       - name: Make gradlew executable
-        run: chmod +x gradlew
+        run: |
+          gradle wrapper --gradle-version 8.5
+          chmod +x gradlew
 
       - name: Build Debug APK
         run: ./gradlew assembleDebug
