@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#001F18">
+
+    <ImageView
+        android:layout_width="320dp"
+        android:layout_height="320dp"
+        android:layout_gravity="center"
+        android:src="@drawable/logo_app"
+        android:alpha="0.06"
+        android:scaleType="fitCenter" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="24dp"
+            android:gravity="center_horizontal">
+
+            <ImageView
+                android:id="@+id/imgLogo"
+                android:layout_width="150dp"
+                android:layout_height="150dp"
+                android:src="@drawable/logo_app"
+                android:scaleType="fitCenter"
+                android:layout_marginBottom="20dp" />
+
+            <TextView
+                android:id="@+id/tvTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="ISR Calculadora MX 2026"
+                android:textColor="#FFFFFF"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:layout_marginBottom="30dp" />
+
+            <EditText
+                android:id="@+id/etSueldoBruto"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Sueldo bruto mensual (MXN)"
+                android:inputType="numberDecimal"
+                android:textColor="#FFFFFF"
+                android:background="@drawable/edittext_gold_glow"
+                android:padding="16dp"
+                android:layout_marginBottom="16dp" />
+
+            <EditText
+                android:id="@+id/etDeducciones"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Deducciones manuales"
+                android:inputType="numberDecimal"
+                android:textColor="#FFFFFF"
+                android:background="@drawable/edittext_gold_glow"
+                android:padding="16dp"
+                android:layout_marginBottom="16dp" />
+
+            <Switch
+                android:id="@+id/switchIMSS"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Calcular cuota IMSS obrera (2.375%)"
+                android:textColor="#FFD700"
+                android:thumbTint="#FFD700"
+                android:trackTint="#004D40"
+                android:layout_marginBottom="24dp" />
+
+            <Button
+                android:id="@+id/btnCalcular"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:text="CALCULAR ISR"
+                android:backgroundTint="#D4AF37"
+                android:textColor="#000000"
+                android:textStyle="bold"
+                android:textSize="18sp"
+                android:layout_marginBottom="30dp" />
+
+            <TextView
+                android:id="@+id/tvResultado"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="18sp"
+                android:textColor="#FFFFFF"
+                android:gravity="center"
+                android:background="@drawable/card_gold_glow"
+                android:padding="20dp"
+                android:layout_marginBottom="16dp" />
+
+            <TextView
+                android:id="@+id/tvEmote"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="50sp"
+                android:gravity="center"
+                android:layout_marginBottom="20dp" />
+
+            <androidx.cardview.widget.CardView
+                android:id="@+id/cardTipFiscal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:visibility="gone"
+                app:cardBackgroundColor="#15FFFFFF"
+                app:cardCornerRadius="12dp"
+                android:layout_marginBottom="24dp">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:padding="16dp">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="💡"
+                        android:textSize="20sp"
+                        android:layout_marginEnd="12dp"/>
+                    <TextView
+                        android:id="@+id/tvTipTexto"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textColor="#FFFFFF"
+                        android:textStyle="italic" />
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <com.github.mikephil.charting.charts.PieChart
+                android:id="@+id/chartGrafica"
+                android:layout_width="match_parent"
+                android:layout_height="300dp"
+                android:visibility="gone"
+                android:layout_marginBottom="24dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="24dp">
+                <Button
+                    android:id="@+id/btnUpgradePremium"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:text="💎 Premium"
+                    android:backgroundTint="#FF8F00"
+                    android:textColor="#FFFFFF"
+                    android:layout_marginEnd="8dp" />
+                <Button
+                    android:id="@+id/btnUpgradeSuperPremium"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:text="👑 Súper Premium"
+                    android:backgroundTint="#D4AF37"
+                    android:textColor="#000000" />
+            </LinearLayout>
+
+            <FrameLayout
+                android:id="@+id/adView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp" />
+
+        </LinearLayout>
+    </ScrollView>
+</FrameLayout>
