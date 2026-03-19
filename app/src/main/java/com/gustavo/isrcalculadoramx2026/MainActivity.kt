@@ -1,5 +1,6 @@
 package com.gustavo.isrcalculadoramx2026
 
+import android.content.Intent
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.pdf.PdfDocument
@@ -9,6 +10,7 @@ import android.view.View
 import android.widget.Button
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.FileProvider
 import com.github.mikephil.charting.data.PieData
 import com.github.mikephil.charting.data.PieDataSet
 import com.github.mikephil.charting.data.PieEntry
@@ -57,7 +59,6 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Inicializar AdMob
         MobileAds.initialize(this) {}
         val adRequest = AdRequest.Builder().build()
         binding.adView.loadAd(adRequest)
@@ -242,13 +243,24 @@ class MainActivity : AppCompatActivity() {
         binding.chartGrafica.invalidate()
     }
 
+    private fun getNombreArchivo(sufijo: String): String {
+        val nombreUsuario = binding.etNombre.text.toString().trim()
+        return if (nombreUsuario.isNotEmpty()) {
+            "Reporte_ISR_2026_${nombreUsuario.replace(" ", "_")}_$sufijo.pdf"
+        } else {
+            "Reporte_ISR_2026_$sufijo.pdf"
+        }
+    }
+
     private fun generarYCompartirPDF(isr: Double, imss: Double, neto: Double) {
         try {
+            val nombreUsuario = binding.etNombre.text.toString().trim()
+                .ifEmpty { "Contribuyente" }
+            val fecha = SimpleDateFormat("dd/MM/yyyy HH:mm:ss", Locale.getDefault()).format(Date())
             val doc = PdfDocument()
             val page = doc.startPage(PdfDocument.PageInfo.Builder(595, 842, 1).create())
             val canvas = page.canvas
             val paint = Paint()
-            val fecha = SimpleDateFormat("dd/MM/yyyy HH:mm:ss", Locale.getDefault()).format(Date())
             paint.textSize = 20f
             paint.isFakeBoldText = true
             paint.color = android.graphics.Color.BLACK
@@ -259,7 +271,10 @@ class MainActivity : AppCompatActivity() {
             paint.strokeWidth = 2f
             canvas.drawLine(40f, 95f, 555f, 95f, paint)
             paint.textSize = 14f
-            var y = 120f
+            paint.isFakeBoldText = true
+            canvas.drawText("Contribuyente: $nombreUsuario", 40f, 115f, paint)
+            paint.isFakeBoldText = false
+            var y = 145f
             paint.isFakeBoldText = true
             canvas.drawText("DATOS DE ENTRADA:", 40f, y, paint); y += 25f
             paint.isFakeBoldText = false
@@ -283,23 +298,16 @@ class MainActivity : AppCompatActivity() {
             canvas.drawText("Generado por ISR Calculadora MX 2026 — Versión Súper Premium", 40f, y, paint); y += 15f
             canvas.drawText("Basado en tablas SAT 2026. Cálculo estimado — no sustituye declaración oficial.", 40f, y, paint)
             doc.finishPage(page)
-            val file = File(getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS),
-                "ISR_Compartir_${System.currentTimeMillis()}.pdf")
+            val file = File(getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), getNombreArchivo("Compartir"))
             doc.writeTo(FileOutputStream(file))
             doc.close()
-
-            val uri = androidx.core.content.FileProvider.getUriForFile(
-                this,
-                "${packageName}.provider",
-                file
-            )
-            val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+            val uri = FileProvider.getUriForFile(this, "${packageName}.provider", file)
+            val intent = Intent(Intent.ACTION_SEND).apply {
                 type = "application/pdf"
-                putExtra(android.content.Intent.EXTRA_STREAM, uri)
-                addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                putExtra(Intent.EXTRA_STREAM, uri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             }
-            startActivity(android.content.Intent.createChooser(intent, "Compartir reporte ISR"))
-
+            startActivity(Intent.createChooser(intent, "Compartir reporte ISR"))
         } catch (e: Exception) {
             Toast.makeText(this, "❌ Error: ${e.message}", Toast.LENGTH_SHORT).show()
         }
@@ -307,6 +315,8 @@ class MainActivity : AppCompatActivity() {
 
     private fun generarPDFGenerico(isr: Double, imss: Double, neto: Double) {
         try {
+            val nombreUsuario = binding.etNombre.text.toString().trim()
+                .ifEmpty { "Contribuyente" }
             val doc = PdfDocument()
             val page = doc.startPage(PdfDocument.PageInfo.Builder(595, 842, 1).create())
             val canvas = page.canvas
@@ -316,8 +326,10 @@ class MainActivity : AppCompatActivity() {
             paint.color = android.graphics.Color.BLACK
             canvas.drawText("ISR Calculadora MX 2026 - Reporte Premium", 40f, 60f, paint)
             paint.textSize = 14f
+            paint.isFakeBoldText = true
+            canvas.drawText("Contribuyente: $nombreUsuario", 40f, 85f, paint)
             paint.isFakeBoldText = false
-            var y = 100f
+            var y = 115f
             canvas.drawText("Sueldo Bruto: ${String.format("%,.2f", bruto)} MXN", 40f, y, paint); y += 25f
             canvas.drawText("Deducciones: ${String.format("%,.2f", deduccionesManual)} MXN", 40f, y, paint); y += 25f
             canvas.drawText("IMSS (2.375%): ${String.format("%,.2f", imss)} MXN", 40f, y, paint); y += 25f
@@ -330,9 +342,14 @@ class MainActivity : AppCompatActivity() {
             paint.textSize = 11f
             canvas.drawText("Cálculo estimado — no sustituye declaración oficial ante el SAT", 40f, y, paint)
             doc.finishPage(page)
-            val file = File(getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS),
-                "ISR_Premium_${System.currentTimeMillis()}.pdf")
+            val file = File(getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), getNombreArchivo("Premium"))
             doc.writeTo(FileOutputStream(file))
+            val uri = FileProvider.getUriForFile(this, "${packageName}.provider", file)
+            val intent = Intent(Intent.ACTION_VIEW).apply {
+                setDataAndType(uri, "application/pdf")
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            startActivity(intent)
             Toast.makeText(this, "✅ PDF Premium guardado", Toast.LENGTH_LONG).show()
             doc.close()
         } catch (e: Exception) {
@@ -342,11 +359,13 @@ class MainActivity : AppCompatActivity() {
 
     private fun generarPDFProfesional(isr: Double, imss: Double, neto: Double) {
         try {
+            val nombreUsuario = binding.etNombre.text.toString().trim()
+                .ifEmpty { "Contribuyente" }
+            val fecha = SimpleDateFormat("dd/MM/yyyy HH:mm:ss", Locale.getDefault()).format(Date())
             val doc = PdfDocument()
             val page = doc.startPage(PdfDocument.PageInfo.Builder(595, 842, 1).create())
             val canvas = page.canvas
             val paint = Paint()
-            val fecha = SimpleDateFormat("dd/MM/yyyy HH:mm:ss", Locale.getDefault()).format(Date())
             paint.textSize = 20f
             paint.isFakeBoldText = true
             paint.color = android.graphics.Color.BLACK
@@ -357,7 +376,10 @@ class MainActivity : AppCompatActivity() {
             paint.strokeWidth = 2f
             canvas.drawLine(40f, 95f, 555f, 95f, paint)
             paint.textSize = 14f
-            var y = 120f
+            paint.isFakeBoldText = true
+            canvas.drawText("Contribuyente: $nombreUsuario", 40f, 115f, paint)
+            paint.isFakeBoldText = false
+            var y = 145f
             paint.isFakeBoldText = true
             canvas.drawText("DATOS DE ENTRADA:", 40f, y, paint); y += 25f
             paint.isFakeBoldText = false
@@ -381,9 +403,14 @@ class MainActivity : AppCompatActivity() {
             canvas.drawText("Generado por ISR Calculadora MX 2026 — Versión Súper Premium", 40f, y, paint); y += 15f
             canvas.drawText("Basado en tablas SAT 2026. Cálculo estimado — no sustituye declaración oficial.", 40f, y, paint)
             doc.finishPage(page)
-            val file = File(getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS),
-                "ISR_SuperPremium_${System.currentTimeMillis()}.pdf")
+            val file = File(getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), getNombreArchivo("SuperPremium"))
             doc.writeTo(FileOutputStream(file))
+            val uri = FileProvider.getUriForFile(this, "${packageName}.provider", file)
+            val intent = Intent(Intent.ACTION_VIEW).apply {
+                setDataAndType(uri, "application/pdf")
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            startActivity(intent)
             Toast.makeText(this, "✅ PDF Profesional guardado", Toast.LENGTH_LONG).show()
             doc.close()
         } catch (e: Exception) {
