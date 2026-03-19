@@ -1,8 +1,6 @@
 package com.gustavo.isrcalculadoramx2026
 
 import android.content.Intent
-import android.graphics.Bitmap
-import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.RectF
@@ -99,6 +97,7 @@ class MainActivity : AppCompatActivity() {
             isPremium = true
             binding.adView.visibility = View.GONE
             binding.etNombre.visibility = View.VISIBLE
+            binding.etDespacho.visibility = View.VISIBLE
 
             val dialog = android.app.Dialog(this)
             dialog.setContentView(R.layout.dialog_premium)
@@ -267,7 +266,6 @@ class MainActivity : AppCompatActivity() {
         if (imss > 0) filas.add(Fila("IMSS (2.375%)", imss, Color.parseColor("#E07000")))
         filas.add(Fila("Sueldo Neto", neto, Color.parseColor("#007A3D")))
 
-        // Encabezados columnas
         paint.textSize = 10f
         paint.isFakeBoldText = true
         paint.color = Color.parseColor("#004D39")
@@ -285,55 +283,57 @@ class MainActivity : AppCompatActivity() {
         for (fila in filas) {
             val pct = if (total > 0) (fila.valor / total * 100) else 0.0
             val barWidth = (fila.valor / total * maxBarWidth).toFloat()
-
-            // Etiqueta izquierda
             paint.color = Color.DKGRAY
             paint.textSize = 11f
             paint.isFakeBoldText = false
             canvas.drawText(fila.label, barLeft, y + barHeight * 0.7f, paint)
-
-            // Barra de color
             paint.color = fila.color
             val barRect = RectF(barLeft, y + barHeight + 2f, barLeft + barWidth, y + barHeight + 2f + 10f)
             canvas.drawRoundRect(barRect, 4f, 4f, paint)
-
-            // Fondo gris de la barra completa
             paint.color = Color.parseColor("#E8E8E8")
             val barBgRect = RectF(barLeft + barWidth, y + barHeight + 2f, barLeft + maxBarWidth, y + barHeight + 2f + 10f)
             canvas.drawRoundRect(barBgRect, 4f, 4f, paint)
-
-            // Monto derecha
             paint.color = Color.parseColor("#222222")
             paint.textSize = 11f
             paint.isFakeBoldText = true
             canvas.drawText("$${String.format("%,.2f", fila.valor)}", montoX, y + barHeight * 0.7f, paint)
-
-            // Porcentaje
             paint.color = Color.parseColor("#555555")
             paint.isFakeBoldText = false
             canvas.drawText("${String.format("%.1f", pct)}%", pctX, y + barHeight * 0.7f, paint)
-
             y += barHeight + 18f
         }
     }
 
-    private fun dibujarHeaderPDF(canvas: android.graphics.Canvas, paint: Paint, titulo: String, fecha: String, nombreUsuario: String) {
+    private fun dibujarHeaderPDF(canvas: android.graphics.Canvas, paint: Paint, titulo: String, fecha: String, nombreUsuario: String, despacho: String) {
+        // Header más alto si hay despacho
+        val headerHeight = if (despacho.isNotEmpty()) 125f else 110f
         paint.color = Color.parseColor("#004D39")
         paint.style = Paint.Style.FILL
-        canvas.drawRect(0f, 0f, 595f, 110f, paint)
+        canvas.drawRect(0f, 0f, 595f, headerHeight, paint)
         paint.color = Color.parseColor("#D4AF37")
-        canvas.drawRect(0f, 105f, 595f, 112f, paint)
+        canvas.drawRect(0f, headerHeight - 5f, 595f, headerHeight + 2f, paint)
         paint.color = Color.parseColor("#D4AF37")
         paint.textSize = 20f
         paint.isFakeBoldText = true
         paint.style = Paint.Style.FILL
-        canvas.drawText(titulo, 40f, 45f, paint)
+        canvas.drawText(titulo, 40f, 40f, paint)
         paint.color = Color.WHITE
         paint.textSize = 11f
         paint.isFakeBoldText = false
-        canvas.drawText("ISR Calculadora MX 2026  •  Tablas SAT vigentes", 40f, 65f, paint)
-        canvas.drawText("Fecha: $fecha", 40f, 82f, paint)
-        canvas.drawText("Titular: $nombreUsuario", 40f, 98f, paint)
+        canvas.drawText("ISR Calculadora MX 2026  •  Tablas SAT vigentes", 40f, 60f, paint)
+        canvas.drawText("Fecha: $fecha", 40f, 76f, paint)
+        if (despacho.isNotEmpty()) {
+            paint.textSize = 12f
+            paint.isFakeBoldText = true
+            paint.color = Color.parseColor("#FFD700")
+            canvas.drawText("Preparado por: $despacho", 40f, 94f, paint)
+            paint.isFakeBoldText = false
+            paint.textSize = 11f
+            paint.color = Color.WHITE
+            canvas.drawText("Titular: $nombreUsuario", 40f, 110f, paint)
+        } else {
+            canvas.drawText("Titular: $nombreUsuario", 40f, 94f, paint)
+        }
     }
 
     private fun dibujarFooterPDF(canvas: android.graphics.Canvas, paint: Paint) {
@@ -361,15 +361,16 @@ class MainActivity : AppCompatActivity() {
     private fun generarYCompartirPDF(isr: Double, imss: Double, neto: Double) {
         try {
             val nombreUsuario = binding.etNombre.text.toString().trim().ifEmpty { "Contribuyente" }
+            val despacho = binding.etDespacho.text.toString().trim()
             val fecha = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(Date())
             val doc = PdfDocument()
             val page = doc.startPage(PdfDocument.PageInfo.Builder(595, 842, 1).create())
             val canvas = page.canvas
             val paint = Paint(Paint.ANTI_ALIAS_FLAG)
 
-            dibujarHeaderPDF(canvas, paint, "REPORTE PROFESIONAL ISR 2026", fecha, nombreUsuario)
+            dibujarHeaderPDF(canvas, paint, "REPORTE PROFESIONAL ISR 2026", fecha, nombreUsuario, despacho)
 
-            var y = 140f
+            var y = if (despacho.isNotEmpty()) 145f else 130f
             paint.style = Paint.Style.FILL
             paint.color = Color.parseColor("#004D39")
             paint.textSize = 13f
@@ -440,7 +441,6 @@ class MainActivity : AppCompatActivity() {
             canvas.drawLine(40f, y, 555f, y, paint); y += 14f
             paint.style = Paint.Style.FILL
             dibujarBarrasPDF(canvas, paint, isr, imss, neto, y)
-
             dibujarFooterPDF(canvas, paint)
             doc.finishPage(page)
             val file = File(getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), getNombreArchivo("Compartir"))
@@ -461,13 +461,14 @@ class MainActivity : AppCompatActivity() {
     private fun generarPDFGenerico(isr: Double, imss: Double, neto: Double) {
         try {
             val nombreUsuario = binding.etNombre.text.toString().trim().ifEmpty { "Contribuyente" }
+            val despacho = binding.etDespacho.text.toString().trim()
             val fecha = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date())
             val doc = PdfDocument()
             val page = doc.startPage(PdfDocument.PageInfo.Builder(595, 842, 1).create())
             val canvas = page.canvas
             val paint = Paint(Paint.ANTI_ALIAS_FLAG)
-            dibujarHeaderPDF(canvas, paint, "REPORTE PREMIUM ISR 2026", fecha, nombreUsuario)
-            var y = 140f
+            dibujarHeaderPDF(canvas, paint, "REPORTE PREMIUM ISR 2026", fecha, nombreUsuario, despacho)
+            var y = if (despacho.isNotEmpty()) 145f else 130f
             paint.style = Paint.Style.FILL
             paint.color = Color.parseColor("#004D39")
             paint.textSize = 13f
@@ -533,13 +534,14 @@ class MainActivity : AppCompatActivity() {
     private fun generarPDFProfesional(isr: Double, imss: Double, neto: Double) {
         try {
             val nombreUsuario = binding.etNombre.text.toString().trim().ifEmpty { "Contribuyente" }
+            val despacho = binding.etDespacho.text.toString().trim()
             val fecha = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(Date())
             val doc = PdfDocument()
             val page = doc.startPage(PdfDocument.PageInfo.Builder(595, 842, 1).create())
             val canvas = page.canvas
             val paint = Paint(Paint.ANTI_ALIAS_FLAG)
-            dibujarHeaderPDF(canvas, paint, "REPORTE PROFESIONAL ISR 2026", fecha, nombreUsuario)
-            var y = 140f
+            dibujarHeaderPDF(canvas, paint, "REPORTE PROFESIONAL ISR 2026", fecha, nombreUsuario, despacho)
+            var y = if (despacho.isNotEmpty()) 145f else 130f
             paint.style = Paint.Style.FILL
             paint.color = Color.parseColor("#004D39")
             paint.textSize = 13f
