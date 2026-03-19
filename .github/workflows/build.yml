@@ -41,11 +41,10 @@ jobs:
       - name: Build and Sign Release AAB
         run: |
           ./gradlew bundleRelease \
-            -Pandroid.injected.signing.store.file=isrcalculadora.jks \
+            -Pandroid.injected.signing.store.file=$(pwd)/app/isrcalculadora.jks \
             -Pandroid.injected.signing.store.password=${{ secrets.KEYSTORE_PASSWORD }} \
             -Pandroid.injected.signing.key.alias=isrcalculadora \
             -Pandroid.injected.signing.key.password=${{ secrets.KEY_PASSWORD }}
-        working-directory: app
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
@@ -58,3 +57,4 @@ jobs:
         with:
           name: ISR-Release-AAB
           path: app/build/outputs/bundle/release/app-release.aab
+          
