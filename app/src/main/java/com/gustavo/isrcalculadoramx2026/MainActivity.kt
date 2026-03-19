@@ -252,26 +252,69 @@ class MainActivity : AppCompatActivity() {
         binding.chartGrafica.invalidate()
     }
 
-    private fun capturarGraficaBitmap(): Bitmap {
-        binding.chartGrafica.setEntryLabelColor(Color.parseColor("#333333"))
-        binding.chartGrafica.legend.textColor = Color.parseColor("#333333")
-        (binding.chartGrafica.data?.dataSet as? PieDataSet)?.valueTextColor = Color.parseColor("#333333")
-        (binding.chartGrafica.data?.dataSet as? PieDataSet)?.valueLineColor = Color.parseColor("#333333")
-        binding.chartGrafica.measure(
-            View.MeasureSpec.makeMeasureSpec(515, View.MeasureSpec.EXACTLY),
-            View.MeasureSpec.makeMeasureSpec(280, View.MeasureSpec.EXACTLY)
-        )
-        binding.chartGrafica.layout(0, 0, 515, 280)
-        val bitmap = Bitmap.createBitmap(515, 280, Bitmap.Config.ARGB_8888)
-        val canvas = Canvas(bitmap)
-        canvas.drawColor(Color.WHITE)
-        binding.chartGrafica.draw(canvas)
-        binding.chartGrafica.setEntryLabelColor(Color.WHITE)
-        binding.chartGrafica.legend.textColor = Color.WHITE
-        (binding.chartGrafica.data?.dataSet as? PieDataSet)?.valueTextColor = Color.WHITE
-        (binding.chartGrafica.data?.dataSet as? PieDataSet)?.valueLineColor = Color.WHITE
-        binding.chartGrafica.invalidate()
-        return bitmap
+    private fun dibujarBarrasPDF(canvas: android.graphics.Canvas, paint: Paint, isr: Double, imss: Double, neto: Double, startY: Float) {
+        val total = isr + imss + neto
+        val maxBarWidth = 250f
+        val barHeight = 22f
+        val barLeft = 40f
+        val montoX = 310f
+        val pctX = 460f
+        var y = startY
+
+        data class Fila(val label: String, val valor: Double, val color: Int)
+        val filas = mutableListOf<Fila>()
+        if (isr > 0) filas.add(Fila("ISR Retenido", isr, Color.parseColor("#C8A000")))
+        if (imss > 0) filas.add(Fila("IMSS (2.375%)", imss, Color.parseColor("#E07000")))
+        filas.add(Fila("Sueldo Neto", neto, Color.parseColor("#007A3D")))
+
+        // Encabezados columnas
+        paint.textSize = 10f
+        paint.isFakeBoldText = true
+        paint.color = Color.parseColor("#004D39")
+        canvas.drawText("CONCEPTO", barLeft, y, paint)
+        canvas.drawText("MONTO", montoX, y, paint)
+        canvas.drawText("% DEL BRUTO", pctX, y, paint)
+        y += 8f
+        paint.color = Color.parseColor("#D4AF37")
+        paint.style = Paint.Style.STROKE
+        paint.strokeWidth = 0.5f
+        canvas.drawLine(barLeft, y, 555f, y, paint)
+        y += 14f
+        paint.style = Paint.Style.FILL
+
+        for (fila in filas) {
+            val pct = if (total > 0) (fila.valor / total * 100) else 0.0
+            val barWidth = (fila.valor / total * maxBarWidth).toFloat()
+
+            // Etiqueta izquierda
+            paint.color = Color.DKGRAY
+            paint.textSize = 11f
+            paint.isFakeBoldText = false
+            canvas.drawText(fila.label, barLeft, y + barHeight * 0.7f, paint)
+
+            // Barra de color
+            paint.color = fila.color
+            val barRect = RectF(barLeft, y + barHeight + 2f, barLeft + barWidth, y + barHeight + 2f + 10f)
+            canvas.drawRoundRect(barRect, 4f, 4f, paint)
+
+            // Fondo gris de la barra completa
+            paint.color = Color.parseColor("#E8E8E8")
+            val barBgRect = RectF(barLeft + barWidth, y + barHeight + 2f, barLeft + maxBarWidth, y + barHeight + 2f + 10f)
+            canvas.drawRoundRect(barBgRect, 4f, 4f, paint)
+
+            // Monto derecha
+            paint.color = Color.parseColor("#222222")
+            paint.textSize = 11f
+            paint.isFakeBoldText = true
+            canvas.drawText("$${String.format("%,.2f", fila.valor)}", montoX, y + barHeight * 0.7f, paint)
+
+            // Porcentaje
+            paint.color = Color.parseColor("#555555")
+            paint.isFakeBoldText = false
+            canvas.drawText("${String.format("%.1f", pct)}%", pctX, y + barHeight * 0.7f, paint)
+
+            y += barHeight + 18f
+        }
     }
 
     private fun dibujarHeaderPDF(canvas: android.graphics.Canvas, paint: Paint, titulo: String, fecha: String, nombreUsuario: String) {
@@ -388,18 +431,16 @@ class MainActivity : AppCompatActivity() {
             paint.isFakeBoldText = false
             canvas.drawText("Ingreso disponible después de impuestos y deducciones", 50f, y + 40f, paint)
             y += 70f
-            if (ultimoNeto > 0 && binding.chartGrafica.visibility == View.VISIBLE) {
-                paint.color = Color.parseColor("#004D39")
-                paint.textSize = 13f
-                paint.isFakeBoldText = true
-                canvas.drawText("DESGLOSE VISUAL", 40f, y, paint); y += 22f
-                paint.color = Color.parseColor("#D4AF37")
-                paint.style = Paint.Style.STROKE
-                canvas.drawLine(40f, y, 555f, y, paint); y += 10f
-                paint.style = Paint.Style.FILL
-                val graficaBitmap = capturarGraficaBitmap()
-                canvas.drawBitmap(graficaBitmap, 40f, y, null)
-            }
+            paint.color = Color.parseColor("#004D39")
+            paint.textSize = 13f
+            paint.isFakeBoldText = true
+            canvas.drawText("DESGLOSE VISUAL", 40f, y, paint); y += 22f
+            paint.color = Color.parseColor("#D4AF37")
+            paint.style = Paint.Style.STROKE
+            canvas.drawLine(40f, y, 555f, y, paint); y += 14f
+            paint.style = Paint.Style.FILL
+            dibujarBarrasPDF(canvas, paint, isr, imss, neto, y)
+
             dibujarFooterPDF(canvas, paint)
             doc.finishPage(page)
             val file = File(getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), getNombreArchivo("Compartir"))
@@ -565,10 +606,9 @@ class MainActivity : AppCompatActivity() {
             canvas.drawText("DESGLOSE VISUAL", 40f, y, paint); y += 22f
             paint.color = Color.parseColor("#D4AF37")
             paint.style = Paint.Style.STROKE
-            canvas.drawLine(40f, y, 555f, y, paint); y += 10f
+            canvas.drawLine(40f, y, 555f, y, paint); y += 14f
             paint.style = Paint.Style.FILL
-            val graficaBitmap = capturarGraficaBitmap()
-            canvas.drawBitmap(graficaBitmap, 40f, y, null)
+            dibujarBarrasPDF(canvas, paint, isr, imss, neto, y)
             dibujarFooterPDF(canvas, paint)
             doc.finishPage(page)
             val file = File(getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), getNombreArchivo("SuperPremium"))
