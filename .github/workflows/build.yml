@@ -1,4 +1,4 @@
-name: Build ISR APK
+name: Build ISR APK + AAB
 
 on: [push, workflow_dispatch]
 
@@ -23,11 +23,41 @@ jobs:
           gradle wrapper --gradle-version 8.5 --distribution-type bin
           chmod +x gradlew
 
+      - name: Generate Keystore
+        run: |
+          keytool -genkey -v \
+            -keystore app/isrcalculadora.jks \
+            -alias isrcalculadora \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -storepass ${{ secrets.KEYSTORE_PASSWORD }} \
+            -keypass ${{ secrets.KEY_PASSWORD }} \
+            -dname "CN=Gustavo Enrique Garay, OU=ISR Calculadora MX, O=Garay, L=Garcia, ST=Nuevo Leon, C=MX"
+
       - name: Build Debug APK
         run: ./gradlew assembleDebug --stacktrace
+
+      - name: Build Release AAB
+        run: ./gradlew bundleRelease --stacktrace
+
+      - name: Sign AAB
+        uses: r0adkll/sign-android-release@v1
+        with:
+          releaseDirectory: app/build/outputs/bundle/release
+          signingKeyBase64: ${{ secrets.KEYSTORE_BASE64 }}
+          alias: isrcalculadora
+          keyStorePassword: ${{ secrets.KEYSTORE_PASSWORD }}
+          keyPassword: ${{ secrets.KEY_PASSWORD }}
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: ISR-Calculadora-MX-2026-APK
+          name: ISR-Debug-APK
           path: app/build/outputs/apk/debug/app-debug.apk
+
+      - name: Upload AAB
+        uses: actions/upload-artifact@v4
+        with:
+          name: ISR-Release-AAB
+          path: app/build/outputs/bundle/release/*.aab
