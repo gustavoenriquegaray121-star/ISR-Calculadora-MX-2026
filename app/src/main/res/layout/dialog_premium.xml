@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="300dp"
+    android:layout_height="wrap_content"
+    android:background="@drawable/background_card"
+    android:orientation="vertical"
+    android:padding="24dp"
+    android:gravity="center">
+
+    <ImageView
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:src="@drawable/logo_app"
+        android:layout_marginBottom="16dp"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="REPORTE EJECUTIVO"
+        android:textColor="@color/gold_accent"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="8dp"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="¿Cómo deseas recibir tu cálculo detallado?"
+        android:textColor="@color/white"
+        android:textAlignment="center"
+        android:layout_marginBottom="24dp"/>
+
+    <Button
+        android:id="@+id/btn_share_pdf"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Compartir por WhatsApp"
+        android:backgroundTint="@color/gold_accent"
+        android:textColor="@color/black"
+        android:layout_marginBottom="8dp"/>
+
+    <Button
+        android:id="@+id/btn_save_pdf"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Guardar en el Teléfono"
+        android:backgroundTint="@color/verde_esmeralda_claro"
+        android:textColor="@color/white"/>
+
+</LinearLayout>
