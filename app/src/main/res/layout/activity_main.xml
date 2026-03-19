@@ -30,7 +30,10 @@
                 android:layout_height="150dp"
                 android:src="@drawable/logo_app"
                 android:scaleType="fitCenter"
-                android:layout_marginBottom="20dp" />
+                android:layout_marginBottom="20dp"
+                android:alpha="0.2"
+                android:tint="@color/verde_esmeralda_claro"
+                android:tintMode="multiply" />
 
             <TextView
                 android:id="@+id/tvTitle"
