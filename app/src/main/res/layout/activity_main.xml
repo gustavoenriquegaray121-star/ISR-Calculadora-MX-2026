@@ -178,30 +178,149 @@
                 android:visibility="gone"
                 android:layout_marginBottom="24dp" />
 
+            <!-- Botones de suscripción -->
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="60dp"
-                android:orientation="horizontal"
-                android:layout_marginBottom="24dp">
-                <Button
-                    android:id="@+id/btnUpgradePremium"
-                    android:layout_width="0dp"
-                    android:layout_weight="1"
-                    android:layout_height="match_parent"
-                    android:text="💎 Premium&#10;$119 pago único"
-                    android:backgroundTint="#FF8F00"
-                    android:textColor="#FFFFFF"
-                    android:textSize="12sp"
-                    android:layout_marginEnd="8dp" />
-                <Button
-                    android:id="@+id/btnUpgradeSuperPremium"
-                    android:layout_width="0dp"
-                    android:layout_weight="1"
-                    android:layout_height="match_parent"
-                    android:text="👑 Súper Premium&#10;$149 pago único"
-                    android:backgroundTint="#D4AF37"
-                    android:textColor="#000000"
-                    android:textSize="12sp" />
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginBottom="16dp">
+
+                <!-- Botón Premium -->
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/cardPremium"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:cardBackgroundColor="#1A2A1A"
+                    app:cardCornerRadius="12dp"
+                    app:cardElevation="4dp"
+                    android:layout_marginBottom="12dp">
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="16dp">
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical"
+                            android:layout_marginBottom="4dp">
+                            <TextView
+                                android:layout_width="0dp"
+                                android:layout_weight="1"
+                                android:layout_height="wrap_content"
+                                android:text="💎 Plan PREMIUM"
+                                android:textColor="#FF8F00"
+                                android:textSize="16sp"
+                                android:textStyle="bold"/>
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="$699/año"
+                                android:textColor="#FFD700"
+                                android:textSize="16sp"
+                                android:textStyle="bold"/>
+                        </LinearLayout>
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Aprox. $58 al mes"
+                            android:textColor="#AAAAAA"
+                            android:textSize="11sp"
+                            android:layout_marginBottom="10dp"/>
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="✅  Sin anuncios\n✅  Reportes PDF profesionales\n✅  Cálculos ilimitados\n✅  Tablas SAT siempre actualizadas"
+                            android:textColor="#CCCCCC"
+                            android:textSize="12sp"
+                            android:layout_marginBottom="12dp"/>
+                        <Button
+                            android:id="@+id/btnUpgradePremium"
+                            android:layout_width="match_parent"
+                            android:layout_height="44dp"
+                            android:text="SUSCRIBIRME AL PREMIUM"
+                            android:backgroundTint="#FF8F00"
+                            android:textColor="#FFFFFF"
+                            android:textSize="13sp"
+                            android:textStyle="bold"/>
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
+
+                <!-- Botón Súper Premium -->
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/cardSuperPremium"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:cardBackgroundColor="#1A1A0A"
+                    app:cardCornerRadius="12dp"
+                    app:cardElevation="4dp">
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="16dp">
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical"
+                            android:layout_marginBottom="4dp">
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_weight="1"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:gravity="center_vertical">
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="👑 Súper Premium"
+                                    android:textColor="#FFD700"
+                                    android:textSize="16sp"
+                                    android:textStyle="bold"/>
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text=" ⭐ Popular"
+                                    android:textColor="#FF8F00"
+                                    android:textSize="11sp"
+                                    android:textStyle="bold"/>
+                            </LinearLayout>
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="$899/año"
+                                android:textColor="#FFD700"
+                                android:textSize="16sp"
+                                android:textStyle="bold"/>
+                        </LinearLayout>
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Solo $200 más que Premium"
+                            android:textColor="#AAAAAA"
+                            android:textSize="11sp"
+                            android:layout_marginBottom="10dp"/>
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="✅  Todo lo del Plan Premium\n✅  Nombre de tu Despacho en el PDF\n✅  Gráficas de barras comparativas\n✅  Firma profesional como elaborador\n✅  Acceso prioritario a Asesoría IA"
+                            android:textColor="#CCCCCC"
+                            android:textSize="12sp"
+                            android:layout_marginBottom="12dp"/>
+                        <Button
+                            android:id="@+id/btnUpgradeSuperPremium"
+                            android:layout_width="match_parent"
+                            android:layout_height="44dp"
+                            android:text="SUSCRIBIRME AL SÚPER PREMIUM"
+                            android:backgroundTint="#D4AF37"
+                            android:textColor="#000000"
+                            android:textSize="13sp"
+                            android:textStyle="bold"/>
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
+
             </LinearLayout>
 
             <com.google.android.gms.ads.AdView
@@ -214,3 +333,10 @@
         </LinearLayout>
     </ScrollView>
 </FrameLayout>
+Ruta: app/src/main/res/layout/activity_main.xml
+También actualiza el MainActivity.kt — busca los dos Toasts de los botones y cámbialos:
+// Premium
+"💎 Premium desbloqueado — \$699/año"
+
+// Súper Premium  
+"👑 Súper Premium desbloqueado — \$899/año"
