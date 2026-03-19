@@ -44,6 +44,17 @@
                 android:layout_marginBottom="30dp" />
 
             <EditText
+                android:id="@+id/etNombre"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Tu nombre (opcional)"
+                android:inputType="textPersonName"
+                android:textColor="#FFFFFF"
+                android:background="@drawable/edittext_gold_glow"
+                android:padding="16dp"
+                android:layout_marginBottom="16dp" />
+
+            <EditText
                 android:id="@+id/etSueldoBruto"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
