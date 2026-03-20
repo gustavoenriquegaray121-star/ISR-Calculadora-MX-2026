@@ -178,6 +178,32 @@
                 android:visibility="gone"
                 android:layout_marginBottom="24dp" />
 
+            <!-- Botón PDF Premium fijo — visible solo cuando isPremium=true -->
+            <Button
+                android:id="@+id/btnExportarPDFPremium"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:text="💎 Exportar PDF Premium"
+                android:backgroundTint="#FF8F00"
+                android:textColor="#FFFFFF"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="12dp"
+                android:visibility="gone" />
+
+            <!-- Botón PDF Súper Premium fijo — visible solo cuando isSuperPremium=true -->
+            <Button
+                android:id="@+id/btnGenerarPDFProfesional"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:text="👑 Generar PDF Profesional"
+                android:backgroundTint="#D4AF37"
+                android:textColor="#000000"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="24dp"
+                android:visibility="gone" />
+
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -329,4 +355,4 @@
 
         </LinearLayout>
     </ScrollView>
-    </FrameLayout>
+</FrameLayout>
