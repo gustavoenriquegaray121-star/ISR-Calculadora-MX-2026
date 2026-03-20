@@ -4,11 +4,13 @@ import android.content.Intent
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.RectF
+import android.graphics.Typeface
 import android.graphics.pdf.PdfDocument
 import android.os.Bundle
 import android.os.Environment
 import android.view.View
 import android.widget.Button
+import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.FileProvider
@@ -81,6 +83,7 @@ class MainActivity : AppCompatActivity() {
 
         binding.btnCalcular.setOnClickListener { calcularISR() }
 
+        // --- LÓGICA PREMIUM (699) ---
         binding.btnUpgradePremium.setOnClickListener {
             if (isPremium) {
                 if (ultimoNeto > 0) {
@@ -92,7 +95,8 @@ class MainActivity : AppCompatActivity() {
                 isPremium = true
                 binding.adView.visibility = View.GONE
                 binding.cardPremium.visibility = View.GONE
-                binding.btnUpgradeSuperPremium.text = "👑 ¡Mejora a Súper Premium!\n\$899/año"
+                // Cambiamos el texto del botón Premium para que ahora sea de envío
+                binding.btnUpgradePremium.text = "GENERAR PDF PREMIUM"
                 Toast.makeText(this, "💎 Premium desbloqueado — \$699/año", Toast.LENGTH_LONG).show()
                 if (ultimoNeto > 0) {
                     binding.chartGrafica.visibility = View.VISIBLE
@@ -101,26 +105,38 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        // --- LÓGICA SÚPER PREMIUM (899) - EL BOTÓN CAMALEÓN ---
         binding.btnUpgradeSuperPremium.setOnClickListener {
-            if (isSuperPremium) {
+            if (!isSuperPremium) {
+                // PRIMER CLICK: ACTIVAR EL MODO
+                isSuperPremium = true
+                isPremium = true
+                
+                // Limpieza de interfaz
+                binding.adView.visibility = View.GONE
+                binding.cardPremium.visibility = View.GONE // Quitamos el plan barato
+                
+                // Mostramos los campos de personalización
+                binding.etNombre.visibility = View.VISIBLE
+                binding.etDespacho.visibility = View.VISIBLE
+                
+                // TRANSFORMACIÓN DEL BOTÓN
+                binding.btnUpgradeSuperPremium.text = "GENERAR Y ENVIAR PDF PERSONALIZADO"
+                binding.btnUpgradeSuperPremium.setBackgroundColor(Color.parseColor("#D4AF37")) // Aseguramos el dorado
+                
+                Toast.makeText(this, "👑 Súper Premium activado. ¡Personaliza y envía!", Toast.LENGTH_LONG).show()
+                
+                if (ultimoNeto > 0) {
+                    binding.chartGrafica.visibility = View.VISIBLE
+                    dibujarGrafica(ultimoISR, ultimoIMSS, ultimoNeto)
+                    // No abrimos el diálogo todavía para dejar que el usuario escriba su nombre arriba
+                }
+            } else {
+                // SEGUNDO CLICK (Y POSTERIORES): YA ES PREMIUM, AHORA ENVÍA
                 if (ultimoNeto > 0) {
                     mostrarDialogPDF()
                 } else {
                     Toast.makeText(this, "😅 Primero calcula un sueldo", Toast.LENGTH_SHORT).show()
-                }
-            } else {
-                isSuperPremium = true
-                isPremium = true
-                binding.adView.visibility = View.GONE
-                binding.cardPremium.visibility = View.GONE
-                binding.cardSuperPremium.visibility = View.GONE
-                binding.etNombre.visibility = View.VISIBLE
-                binding.etDespacho.visibility = View.VISIBLE
-                Toast.makeText(this, "👑 Súper Premium desbloqueado — \$899/año", Toast.LENGTH_LONG).show()
-                if (ultimoNeto > 0) {
-                    binding.chartGrafica.visibility = View.VISIBLE
-                    dibujarGrafica(ultimoISR, ultimoIMSS, ultimoNeto)
-                    mostrarDialogPDF()
                 }
             }
         }
