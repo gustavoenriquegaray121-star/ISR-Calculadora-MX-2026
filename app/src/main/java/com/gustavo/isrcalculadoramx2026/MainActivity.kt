@@ -174,7 +174,6 @@ class MainActivity : AppCompatActivity() {
 
     private fun calcularISR() {
         cerrarTeclado()
-
         bruto = binding.etSueldoBruto.text.toString().toDoubleOrNull() ?: 0.0
         deduccionesManual = binding.etDeducciones.text.toString().toDoubleOrNull() ?: 0.0
 
@@ -264,11 +263,13 @@ class MainActivity : AppCompatActivity() {
 
     private fun dibujarGrafica(isr: Double, imss: Double, neto: Double) {
         val entries = mutableListOf<PieEntry>()
+        if (deduccionesManual > 0) entries.add(PieEntry(deduccionesManual.toFloat(), "Deducido"))
         if (isr > 0) entries.add(PieEntry(isr.toFloat(), "ISR"))
         if (imss > 0) entries.add(PieEntry(imss.toFloat(), "IMSS"))
         entries.add(PieEntry(neto.toFloat(), "Neto"))
 
         val colors = mutableListOf<Int>()
+        if (deduccionesManual > 0) colors.add(Color.parseColor("#9C27B0"))
         if (isr > 0) colors.add(Color.parseColor("#FFD700"))
         if (imss > 0) colors.add(Color.parseColor("#FF8F00"))
         colors.add(Color.parseColor("#00C853"))
@@ -309,6 +310,7 @@ class MainActivity : AppCompatActivity() {
 
         data class Fila(val label: String, val valor: Double, val color: Int)
         val filas = mutableListOf<Fila>()
+        if (deduccionesManual > 0) filas.add(Fila("Deducciones", deduccionesManual, Color.parseColor("#9C27B0")))
         if (isr > 0) filas.add(Fila("ISR Retenido", isr, Color.parseColor("#C8A000")))
         if (imss > 0) filas.add(Fila("IMSS (2.375%)", imss, Color.parseColor("#E07000")))
         filas.add(Fila("Sueldo Neto", neto, Color.parseColor("#007A3D")))
