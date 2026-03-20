@@ -82,49 +82,64 @@ class MainActivity : AppCompatActivity() {
         binding.btnCalcular.setOnClickListener { calcularISR() }
 
         binding.btnUpgradePremium.setOnClickListener {
-            isPremium = true
-            binding.adView.visibility = View.GONE
-            Toast.makeText(this, "💎 Premium desbloqueado — \$119 pago único", Toast.LENGTH_LONG).show()
-            if (ultimoNeto > 0) {
-                binding.chartGrafica.visibility = View.VISIBLE
-                dibujarGrafica(ultimoISR, ultimoIMSS, ultimoNeto)
-                generarPDFGenerico(ultimoISR, ultimoIMSS, ultimoNeto)
+            if (isPremium) {
+                if (ultimoNeto > 0) {
+                    generarPDFGenerico(ultimoISR, ultimoIMSS, ultimoNeto)
+                } else {
+                    Toast.makeText(this, "😅 Primero calcula un sueldo", Toast.LENGTH_SHORT).show()
+                }
+            } else {
+                isPremium = true
+                binding.adView.visibility = View.GONE
+                binding.btnUpgradePremium.text = "💎 Exportar PDF Premium"
+                Toast.makeText(this, "💎 Premium desbloqueado — \$699/año", Toast.LENGTH_LONG).show()
+                if (ultimoNeto > 0) {
+                    binding.chartGrafica.visibility = View.VISIBLE
+                    dibujarGrafica(ultimoISR, ultimoIMSS, ultimoNeto)
+                }
             }
         }
 
         binding.btnUpgradeSuperPremium.setOnClickListener {
-            isSuperPremium = true
-            isPremium = true
-            binding.adView.visibility = View.GONE
-            binding.etNombre.visibility = View.VISIBLE
-            binding.etDespacho.visibility = View.VISIBLE
-
-            val dialog = android.app.Dialog(this)
-            dialog.setContentView(R.layout.dialog_premium)
-            dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
-
-            val btnShare = dialog.findViewById<Button>(R.id.btn_share_pdf)
-            val btnSave = dialog.findViewById<Button>(R.id.btn_save_pdf)
-
-            btnShare.setOnClickListener {
-                if (ultimoNeto > 0) generarYCompartirPDF(ultimoISR, ultimoIMSS, ultimoNeto)
-                else Toast.makeText(this, "😅 Primero calcula un sueldo", Toast.LENGTH_SHORT).show()
-                dialog.dismiss()
-            }
-
-            btnSave.setOnClickListener {
-                if (ultimoNeto > 0) generarPDFProfesional(ultimoISR, ultimoIMSS, ultimoNeto)
-                else Toast.makeText(this, "😅 Primero calcula un sueldo", Toast.LENGTH_SHORT).show()
-                dialog.dismiss()
-            }
-
-            dialog.show()
-
-            if (ultimoNeto > 0) {
-                binding.chartGrafica.visibility = View.VISIBLE
-                dibujarGrafica(ultimoISR, ultimoIMSS, ultimoNeto)
+            if (isSuperPremium) {
+                if (ultimoNeto > 0) {
+                    mostrarDialogPDF()
+                } else {
+                    Toast.makeText(this, "😅 Primero calcula un sueldo", Toast.LENGTH_SHORT).show()
+                }
+            } else {
+                isSuperPremium = true
+                isPremium = true
+                binding.adView.visibility = View.GONE
+                binding.etNombre.visibility = View.VISIBLE
+                binding.etDespacho.visibility = View.VISIBLE
+                binding.btnUpgradePremium.text = "💎 Exportar PDF Premium"
+                binding.btnUpgradeSuperPremium.text = "👑 Generar PDF Profesional"
+                Toast.makeText(this, "👑 Súper Premium desbloqueado — \$899/año", Toast.LENGTH_LONG).show()
+                if (ultimoNeto > 0) {
+                    binding.chartGrafica.visibility = View.VISIBLE
+                    dibujarGrafica(ultimoISR, ultimoIMSS, ultimoNeto)
+                    mostrarDialogPDF()
+                }
             }
         }
+    }
+
+    private fun mostrarDialogPDF() {
+        val dialog = android.app.Dialog(this)
+        dialog.setContentView(R.layout.dialog_premium)
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+        val btnShare = dialog.findViewById<Button>(R.id.btn_share_pdf)
+        val btnSave = dialog.findViewById<Button>(R.id.btn_save_pdf)
+        btnShare.setOnClickListener {
+            generarYCompartirPDF(ultimoISR, ultimoIMSS, ultimoNeto)
+            dialog.dismiss()
+        }
+        btnSave.setOnClickListener {
+            generarPDFProfesional(ultimoISR, ultimoIMSS, ultimoNeto)
+            dialog.dismiss()
+        }
+        dialog.show()
     }
 
     private fun calcularISR() {
@@ -305,7 +320,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun dibujarHeaderPDF(canvas: android.graphics.Canvas, paint: Paint, titulo: String, fecha: String, nombreUsuario: String, despacho: String) {
-        // Header más alto si hay despacho
         val headerHeight = if (despacho.isNotEmpty()) 125f else 110f
         paint.color = Color.parseColor("#004D39")
         paint.style = Paint.Style.FILL
@@ -367,9 +381,7 @@ class MainActivity : AppCompatActivity() {
             val page = doc.startPage(PdfDocument.PageInfo.Builder(595, 842, 1).create())
             val canvas = page.canvas
             val paint = Paint(Paint.ANTI_ALIAS_FLAG)
-
             dibujarHeaderPDF(canvas, paint, "REPORTE PROFESIONAL ISR 2026", fecha, nombreUsuario, despacho)
-
             var y = if (despacho.isNotEmpty()) 145f else 130f
             paint.style = Paint.Style.FILL
             paint.color = Color.parseColor("#004D39")
