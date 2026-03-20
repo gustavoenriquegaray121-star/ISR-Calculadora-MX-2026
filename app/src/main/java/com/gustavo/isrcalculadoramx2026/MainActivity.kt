@@ -1,5 +1,6 @@
 package com.gustavo.isrcalculadoramx2026
 
+import android.content.Context
 import android.content.Intent
 import android.graphics.Color
 import android.graphics.Paint
@@ -8,6 +9,7 @@ import android.graphics.pdf.PdfDocument
 import android.os.Bundle
 import android.os.Environment
 import android.view.View
+import android.view.inputmethod.InputMethodManager
 import android.widget.Button
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -145,6 +147,14 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun cerrarTeclado() {
+        currentFocus?.let { view ->
+            val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+            imm.hideSoftInputFromWindow(view.windowToken, 0)
+            view.clearFocus()
+        }
+    }
+
     private fun mostrarDialogPDF() {
         val dialog = android.app.Dialog(this)
         dialog.setContentView(R.layout.dialog_premium)
@@ -163,6 +173,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun calcularISR() {
+        cerrarTeclado()
+
         bruto = binding.etSueldoBruto.text.toString().toDoubleOrNull() ?: 0.0
         deduccionesManual = binding.etDeducciones.text.toString().toDoubleOrNull() ?: 0.0
 
