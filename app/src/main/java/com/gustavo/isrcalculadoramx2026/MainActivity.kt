@@ -81,7 +81,6 @@ class MainActivity : AppCompatActivity() {
 
         binding.btnCalcular.setOnClickListener { calcularISR() }
 
-        // Botón fijo PDF Premium
         binding.btnExportarPDFPremium.setOnClickListener {
             if (ultimoNeto > 0) {
                 generarPDFGenerico(ultimoISR, ultimoIMSS, ultimoNeto)
@@ -90,7 +89,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // Botón fijo PDF Súper Premium
         binding.btnGenerarPDFProfesional.setOnClickListener {
             if (ultimoNeto > 0) {
                 mostrarDialogPDF()
@@ -99,7 +97,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // --- LÓGICA PREMIUM (699) ---
         binding.btnUpgradePremium.setOnClickListener {
             if (isPremium) {
                 if (ultimoNeto > 0) {
@@ -112,7 +109,7 @@ class MainActivity : AppCompatActivity() {
                 binding.adView.visibility = View.GONE
                 binding.cardPremium.visibility = View.GONE
                 binding.btnExportarPDFPremium.visibility = View.VISIBLE
-                binding.btnUpgradeSuperPremium.text = "👑 ¡MEJORA A SÚPER PREMIUM!\nSOLO \$200 adicionales"
+                binding.btnUpgradeSuperPremium.text = "👑 ¡MEJORA A SÚPER PREMIUM! — Solo \$200 más"
                 Toast.makeText(this, "💎 Premium activado — \$699/año", Toast.LENGTH_LONG).show()
                 if (ultimoNeto > 0) {
                     binding.chartGrafica.visibility = View.VISIBLE
@@ -121,7 +118,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // --- LÓGICA SÚPER PREMIUM ---
         binding.btnUpgradeSuperPremium.setOnClickListener {
             if (!isSuperPremium) {
                 val mensaje = if (isPremium) "¡Upgrade completado por \$200!" else "👑 Súper Premium activado — \$899/año"
