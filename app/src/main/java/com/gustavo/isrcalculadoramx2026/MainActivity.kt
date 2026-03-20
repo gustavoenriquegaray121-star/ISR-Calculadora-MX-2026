@@ -91,7 +91,8 @@ class MainActivity : AppCompatActivity() {
             } else {
                 isPremium = true
                 binding.adView.visibility = View.GONE
-                binding.btnUpgradePremium.text = "💎 Exportar PDF Premium"
+                binding.cardPremium.visibility = View.GONE
+                binding.btnUpgradeSuperPremium.text = "👑 ¡Mejora a Súper Premium!\n\$899/año"
                 Toast.makeText(this, "💎 Premium desbloqueado — \$699/año", Toast.LENGTH_LONG).show()
                 if (ultimoNeto > 0) {
                     binding.chartGrafica.visibility = View.VISIBLE
@@ -111,10 +112,10 @@ class MainActivity : AppCompatActivity() {
                 isSuperPremium = true
                 isPremium = true
                 binding.adView.visibility = View.GONE
+                binding.cardPremium.visibility = View.GONE
+                binding.cardSuperPremium.visibility = View.GONE
                 binding.etNombre.visibility = View.VISIBLE
                 binding.etDespacho.visibility = View.VISIBLE
-                binding.btnUpgradePremium.text = "💎 Exportar PDF Premium"
-                binding.btnUpgradeSuperPremium.text = "👑 Generar PDF Profesional"
                 Toast.makeText(this, "👑 Súper Premium desbloqueado — \$899/año", Toast.LENGTH_LONG).show()
                 if (ultimoNeto > 0) {
                     binding.chartGrafica.visibility = View.VISIBLE
