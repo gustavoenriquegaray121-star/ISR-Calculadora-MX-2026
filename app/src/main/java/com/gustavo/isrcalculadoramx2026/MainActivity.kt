@@ -81,6 +81,24 @@ class MainActivity : AppCompatActivity() {
 
         binding.btnCalcular.setOnClickListener { calcularISR() }
 
+        // Botón fijo PDF Premium
+        binding.btnExportarPDFPremium.setOnClickListener {
+            if (ultimoNeto > 0) {
+                generarPDFGenerico(ultimoISR, ultimoIMSS, ultimoNeto)
+            } else {
+                Toast.makeText(this, "😅 Primero calcula un sueldo", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        // Botón fijo PDF Súper Premium
+        binding.btnGenerarPDFProfesional.setOnClickListener {
+            if (ultimoNeto > 0) {
+                mostrarDialogPDF()
+            } else {
+                Toast.makeText(this, "😅 Primero calcula un sueldo", Toast.LENGTH_SHORT).show()
+            }
+        }
+
         // --- LÓGICA PREMIUM (699) ---
         binding.btnUpgradePremium.setOnClickListener {
             if (isPremium) {
@@ -93,13 +111,9 @@ class MainActivity : AppCompatActivity() {
                 isPremium = true
                 binding.adView.visibility = View.GONE
                 binding.cardPremium.visibility = View.GONE
-                
-                // Si el usuario compra Premium, el botón dorado de abajo se actualiza a precio de "Upgrade"
-                binding.btnUpgradeSuperPremium.text = "👑 ¡MEJORA A SÚPER PREMIUM!\nSOLO $200 adicionales"
-                
-                binding.btnUpgradePremium.text = "GENERAR PDF PREMIUM"
+                binding.btnExportarPDFPremium.visibility = View.VISIBLE
+                binding.btnUpgradeSuperPremium.text = "👑 ¡MEJORA A SÚPER PREMIUM!\nSOLO \$200 adicionales"
                 Toast.makeText(this, "💎 Premium activado — \$699/año", Toast.LENGTH_LONG).show()
-                
                 if (ultimoNeto > 0) {
                     binding.chartGrafica.visibility = View.VISIBLE
                     dibujarGrafica(ultimoISR, ultimoIMSS, ultimoNeto)
@@ -107,35 +121,25 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // --- LÓGICA SÚPER PREMIUM (EL BOTÓN CAMALEÓN CON UPGRADE) ---
+        // --- LÓGICA SÚPER PREMIUM ---
         binding.btnUpgradeSuperPremium.setOnClickListener {
             if (!isSuperPremium) {
-                // PRIMER CLICK: ACTIVAR EL MODO (Ya sea desde cero o desde upgrade)
-                val mensaje = if (isPremium) "¡Upgrade completado por $200!" else "👑 Súper Premium activado — $899/año"
-                
+                val mensaje = if (isPremium) "¡Upgrade completado por \$200!" else "👑 Súper Premium activado — \$899/año"
                 isSuperPremium = true
                 isPremium = true
-                
-                // Limpieza total de ventas
                 binding.adView.visibility = View.GONE
                 binding.cardPremium.visibility = View.GONE
-                
-                // Mostramos los campos de personalización
+                binding.cardSuperPremium.visibility = View.GONE
+                binding.btnExportarPDFPremium.visibility = View.GONE
+                binding.btnGenerarPDFProfesional.visibility = View.VISIBLE
                 binding.etNombre.visibility = View.VISIBLE
                 binding.etDespacho.visibility = View.VISIBLE
-                
-                // TRANSFORMACIÓN DEL BOTÓN FINAL
-                binding.btnUpgradeSuperPremium.text = "GENERAR Y ENVIAR PDF PERSONALIZADO"
-                binding.btnUpgradeSuperPremium.setBackgroundColor(Color.parseColor("#D4AF37")) 
-                
                 Toast.makeText(this, mensaje, Toast.LENGTH_LONG).show()
-                
                 if (ultimoNeto > 0) {
                     binding.chartGrafica.visibility = View.VISIBLE
                     dibujarGrafica(ultimoISR, ultimoIMSS, ultimoNeto)
                 }
             } else {
-                // SEGUNDO CLICK: YA ES EL DUEÑO DEL MUNDO, ENVIAR PDF
                 if (ultimoNeto > 0) {
                     mostrarDialogPDF()
                 } else {
